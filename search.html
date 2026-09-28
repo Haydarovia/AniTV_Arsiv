@@ -44,11 +44,15 @@ svg{vertical-align:-2px}
 
 /* ===== üst çubuk ===== */
 header.top{position:sticky;top:0;z-index:50;background:rgba(13,19,21,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
-.top-in{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-4);max-width:var(--container);margin:0 auto}
-.logo{display:flex;align-items:center;gap:var(--sp-2);font:800 19px var(--fd);letter-spacing:-.3px;color:var(--tx);white-space:nowrap;cursor:pointer}
-.logo:hover{text-decoration:none}
-.logo svg{width:22px;height:22px;color:var(--ac)}
-.logo b{font-weight:600;color:var(--tx2);margin-left:4px}
+.top-in{display:flex;align-items:center;gap:var(--sp-3);padding:10px var(--sp-4);max-width:var(--container);margin:0 auto}
+/* LOGO: "turkanime arsiv logo.png" (2430x738, 1,4 MB) -> logo.png 342x104 / 55 KB.
+   GÖSTERİM 52px, kaynak 2x. Ölçüm: logonun kenarlarında neredeyse boşluk yok
+   (alfa kutusu 2238x719 / 2430x738, dolu piksel %52,3) yani kırpma işe yaramıyordu;
+   sorun GÖSTERİM yüksekliğiydi — 38px'te karakter ve "TürkAnime" yazısı okunmuyordu.
+   width/height öznitelikleri sabit: görüntü alanı rezerve edilir, layout shift olmaz. */
+.logo{display:flex;align-items:center;cursor:pointer;flex:none}
+.logo:hover{text-decoration:none;opacity:.9}
+.logo img{display:block;height:52px;width:auto;max-width:none}
 /* M1: üst bar nav — hiyerarşi: logo (en baskın) → nav → arama */
 .topnav{display:flex;align-items:center;gap:2px;flex:none}
 .topnav a{padding:7px 13px;border-radius:var(--rad-pill);color:var(--tx2);font-size:13.5px;font-weight:600;white-space:nowrap}
@@ -245,6 +249,14 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 /* ===== oynatıcı ===== */
 .player-box{position:relative;background:#000;border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;display:flex;justify-content:center}
 .player-box iframe{display:block;width:100%;aspect-ratio:16/9;max-width:min(100%,calc(78vh * 16 / 9));border:0;background:#000}
+/* iframe'e konulamayan kaynak (bkz. GOMULEMEZ_HOST) — sessiz bos kutu yerine durust mesaj */
+.player-box.gomulemez{flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-2);
+  background:var(--bg2);padding:calc(var(--sp-6)) var(--sp-4);text-align:center;aspect-ratio:auto;min-height:38vh}
+.player-box.gomulemez .big{font-size:30px;line-height:1;color:var(--warn)}
+.player-box.gomulemez .big svg{width:30px;height:30px}
+.player-box.gomulemez .sub{color:var(--tx3);font-size:13px;max-width:52ch;line-height:1.6}
+.player-box.gomulemez .btn{margin-top:var(--sp-1)}
+.jhint{color:var(--tx3);font-size:12px;margin-left:4px}
 .note-soft{margin-top:var(--sp-2);font-size:12px;color:var(--tx2);background:var(--card);border:1px solid var(--line);border-radius:var(--rad-sm);padding:8px var(--sp-3)}
 .note-soft b{color:var(--tx)}
 .note{background:rgba(255,203,92,.07);border:1px solid rgba(255,203,92,.3);color:#ffe2a0;border-radius:var(--rad);padding:12px var(--sp-4);font-size:13px;margin:var(--sp-3) 0}
@@ -299,7 +311,7 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 @media (max-width:720px){
   body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
   .top-in{padding:var(--sp-2) var(--sp-3);gap:var(--sp-2)}
-  .logo span{display:none}
+  .logo img{height:40px}
   .topnav{display:none}
   .kbd{display:none}
   .top .rnd{display:none}
@@ -351,7 +363,7 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 
 <header class="top">
   <div class="top-in">
-    <a class="logo" href="#/" aria-label="Ana sayfa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z"/></svg><span>türkanime<b>arşiv</b></span></a>
+    <a class="logo" href="#/" aria-label="TürkAnime Arşiv — ana sayfa"><img src="logo.png" width="342" height="104" alt="TürkAnime Arşiv" decoding="async" fetchpriority="high"></a>
     <nav class="topnav" aria-label="Ana gezinme">
       <a href="#/" data-nav="ana">Ana sayfa</a>
       <a href="#/animeler" data-nav="animeler">Animeler</a>
@@ -376,15 +388,19 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 </footer>
 
 <nav class="bnav" aria-label="Alt menü">
-  <a href="#/ara"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Ana sayfa</a>
+  <a href="#/" data-nav="ana-mobil"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Ana sayfa</a>
   <a href="#/animeler"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M17 2l-5 5-5-5"/></svg>Animeler</a>
   <a href="#/kategoriler"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>Kategoriler</a>
   <button id="bSearch" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Ara</button>
   <button class="rnd" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg>Rastgele</button>
 </nav>
 
-<script src="kaldirilan.js"></script>
-<script src="anilist.js"></script>
+<!-- kaldirilan.js: sunucuda 404 / dosya yoksa sessizce boş kalıyordu ->
+     76 doğrulanmış ölü link (BYSE, PIXELDRAIN) oynatıcıya geri dönüyordu ve
+     HİÇBİR uyarı çıkmıyordu. Artık hem konsola hem arayüze düşüyor. -->
+<script>window.KALDIRILAN = window.KALDIRILAN || [];</script>
+<script src="kaldirilan.js" onerror="window.KALDIRILAN_YOK=1;console.warn('[turkanime] kaldirilan.js yuklenemedi - kaldirilan linkler UYGULANMIYOR')"></script>
+<script src="anilist.js" onerror="console.warn('[turkanime] anilist.js yuklenemedi - AniList zenginlestirmesi kapali')"></script>
 <script>
 /* ---- yönetici eklemeleri: eklenen.js (turkanime_yonet.py üretir) ----
    KALDIRILAN gibi çalışma anında uygulanan override verisidir; b/ dosyalarını
@@ -398,22 +414,37 @@ window.EKLENEN = window.EKLENEN || [];
   s.onload = function(){
     if ((location.hash||'').indexOf('#/anime/')===0 && typeof route === 'function') route();
   };
+  /* onerror YOKSA: 404 alan yönetici eklemelerinin sessizce hiç
+     uygulanmadığını anlaması imkânsızdı (route() de hiç çağrılmazdı). */
+  s.onerror = function(){
+    console.warn('[turkanime] eklenen.js yuklenemedi - yonetici eklemeleri UYGULANMIYOR');
+  };
   s.src = 'eklenen.js' + bust;
   document.head.appendChild(s);
 })();
 const EKLENEN_I_BASE = 100000;   // eklenen linklere verilen sentetik indeks başlangıcı
-function eklenenLinkler(slug, ep){
+function eklenenLinkler(slug, ep, data){
   /* slug+bölüm eşleşen yönetici eklemelerini link nesnelerine çevirir;
-     kaldırılanlar ve b/ verisinde zaten var olanlar elenir */
+     kaldırılanlar ve b/ verisinde zaten var olanlar elenir.
+     BELİRSİZ `no` DÜZELTMESİ: `no` aynı dosyada birden fazla bölümde tekrar
+     ediyorsa (65 dosya / 180 değer) sayı eşleşmesi kullanılamaz — yoksa
+     {bolum:3} kaydı pokemon'da hem 1. sezonun hem 5. hem 6. sezonun 3.
+     bölümüne birden yapışırdı. `data` verilirse belirsizlik denetlenir. */
   const k = kaldirilanSet();
   const mevcut = new Set((ep.links||[]).map(l=>l.url));
+  const belirsiz = data ? ambNo(data).has(ep.no!=null?String(ep.no):'') : false;
   const out = [];
+  /* B16: EKLENEN içinde aynı URL iki kez geçerse iki ayrı satır + iki ayrı
+     KAYNAK çipi (farklı sentetik indeksle) üretiliyordu. */
+  const eklendi = new Set();
   for (const e of (Array.isArray(window.EKLENEN)?window.EKLENEN:[])){
     if (!e || e.slug!==slug || !e.url) continue;
     const eb = String(e.bolum==null?'':e.bolum);
-    const noS = ep.no!=null?String(ep.no):'';
-    if (!(eb===noS || eb===ep.slug)) continue;
-    if (k.has(e.url) || mevcut.has(e.url)) continue;
+    /* Slug her zaman güvenli bir adres; sayı yalnızca tekil ise. */
+    const noEs = belirsiz ? '' : (ep.no!=null?String(ep.no):'');
+    if (!(eb===noEs || eb===ep.slug)) continue;
+    if (k.has(e.url) || mevcut.has(e.url) || eklendi.has(e.url)) continue;
+    eklendi.add(e.url);
     out.push({url:e.url, tip:'url', player:e.player||'?', fansub:e.fansub||'?', eklenen:true});
   }
   return out;
@@ -446,9 +477,22 @@ const ANIME = [];
   for (const row of window.INDEX){
     const slug=row[0], baslik=row[1], eps=row[2], urls=row[3], masks=row[4], top=row[5]||[];
     const n = norm(baslik);
-    const nTok = new Set(n.split(' ').concat(norm(slug).split(' ')).filter(Boolean));
+    /* BAŞLIK ve SLUG token'ları AYRIŞTIRILDI (M5 düzeltmesi, 28.09.2026).
+       Önceden ikisi tek bir `nTok` kümesine eşit ağırlıkla giriyordu. Slug'lar
+       kısa bağlaç taşıyor: pants-no-ana-mambo-de-ganbo -> "no","de","ana";
+       kono-sekai-wa-fukanzen -> "wa"; dekisokonai-...-to-yobareta -> "to".
+       Bunlar TAM KELİME puanı (0, en yüksek) alıyordu: "no" yazınca yüzlerce
+       anime kusursuz eşleşme olarak dönüyordu. Artık başlık token'ı güçlü,
+       slug token'ı zayıf (yalnızca 3+ harf), ve slug'a özgü eşleşmeler
+       sonuç listesinde daha aşağıda duruyor. */
+    const baslikTok = n.split(' ').filter(Boolean);
+    const slugTok   = norm(slug).split(' ').filter(w=> w.length>=3 );
     ANIME.push({ slug, baslik, eps, urls, masks, top,
-      nTitle: n, nTok, tokArr: [...nTok], hay: n+' '+norm(slug) });
+      nTitle: n,
+      nTok:   new Set(baslikTok),                       // güçlü: tam kelime = 0 puan
+      sTok:   new Set(slugTok),                         // zayıf: tam kelime = 3 puan
+      tokArr: baslikTok,                                // kelime başı araması
+      hay: n+' '+norm(slug) });
   }
   ANIME.sort((a,b)=> a.nTitle < b.nTitle ? -1 : a.nTitle > b.nTitle ? 1 : 0);
 })();
@@ -487,7 +531,29 @@ function linkKaldir(u){
   const s = yerelKaldirilanSet(); s.add(u);
   try{ localStorage.setItem(KLD_KEY, JSON.stringify([...s])); }catch(e){}
   _tumKld = null;
+  sonKaldirilan = u;
 }
+/* B12 düzeltmesi: kaldırma GERİ ALINAMAZDI. Tek bir yanlış tık, kullanıcının
+   localStorage'ını elle temizlemesini gerektiriyordu (DevTools). Üstelik
+   kaldırma URL'e göre GLOBAL: aynı link birden çok bölümde geçiyorsa tek
+   tık hepsinden siliyordu ve bunu ima eden hiçbir metin yoktu.
+   Artık: (1) onay kutusu, (2) kapsamı söyleyen ipucu, (3) son kaldırılanı
+   geri alma düğmesi. */
+let sonKaldirilan = null;
+function linkGeriAl(){
+  if (!sonKaldirilan) return false;
+  const s = yerelKaldirilanSet();
+  if (!s.delete(sonKaldirilan)) return false;
+  try{ localStorage.setItem(KLD_KEY, JSON.stringify([...s])); }catch(e){}
+  _tumKld = null;
+  sonKaldirilan = null;
+  return true;
+}
+window.addEventListener('storage', e=>{
+  if (e.key!==KLD_KEY) return;
+  _yerelKld = null; _tumKld = null;
+  route();
+});
 function bekleyenKaldirilan(){ return [...yerelKaldirilanSet()].filter(u=>!GLOBAL_KLD.has(u)); }
 function kaldirilanSay(){ return bekleyenKaldirilan().length; }
 function kaldirilanFiltre(links){ const k = kaldirilanSet(); return (links||[]).filter(l=>!k.has(l.url)); }
@@ -556,9 +622,19 @@ function cleanRawUrl(u){
   let s = String(u||'').trim();
   const h = s.indexOf('href.li/?'); if (h!==-1) s = s.slice(h+9);
   if (s.startsWith('https:https://')) s = s.slice(6);
+  /* Bozuk yol normalizasyonu: veride 1.471 adet "https://my.mail.ru//mail/…"
+     (cift egik cizgi) var. Sorgu dizesindeki "//" DEGISTIRILMEZ — sadece yol. */
+  s = s.replace(/^(https?:\/\/[^/?#]+)\/{2,}/i, '$1/');
   return s;
 }
 const BAD_SCHEME = /^\s*(javascript|data|vbscript|file):/i;
+/* iframe'e konulamayan host'lar -> embedUrl() null doner, oynatici yerine
+   aciklayici mesaj gosterilir. Kanit ve gerekce: embedUrl() icindeki yorum.
+   host = URL.hostname, 'www.' atilmis haliyle eslesir. */
+const GOMULEMEZ_HOST = {
+  'yadi.sk': 1, 'disk.yandex.com': 1, 'disk.yandex.com.tr': 1, 'disk.yandex.ru': 1,
+  'www.turkanime.tv': 1, 'turkanime.tv': 1, 'turkanime.net': 1
+};
 function embedUrl(raw, tip){
   if (tip!=='url') return null;               // mask/yol: gömülemez
   const s = cleanRawUrl(raw);
@@ -593,9 +669,20 @@ function embedUrl(raw, tip){
       if (m) return 'https://odnoklassniki.ru/videoembed/'+m[1];
       return s;
     }
-    /* SIBNET (shell.php), MP4UPLOAD (embed-*.html), VOE (/e/), DOOD (/e/),
-       MAIL.RU (video/embed), UQLOAD/HDVID/VUDEO/MVIDOO/VTUBE/STREAMSB (embed-*.html),
-       FILEMOON/EMBEDO/HIGHLOAD/TUBELOAD (/e/), EMBEDGRAM (/v/), SAVEFILEWAY, CLONE... */
+    /* GOMULEMEYEN HOST'LAR
+       Bu host'lar kendi sunucu cevabinda iframe'e izin vermiyor; link ham
+       verilirse oynatici sessizce BOS siyah kutu gosterir ve kullanici ne
+       oldugunu anlamaz. Kanit (2026-09-28, curl + tarayici konsolu):
+         YADISK     -> X-Frame-Options: SAMEORIGIN
+                       CSP frame-ancestors webvisor.com *.webvisor.com
+                       (disk.yandex.com.tr yalnizca kendi altyapisina izin veriyor)
+         PIXELDRAIN -> X-Frame-Options: SAMEORIGIN
+                       CSP frame-ancestors 'none'
+       VIDEOLAR CANLI — sadece gomulemiyor. Bu yuzden link GIZLENMEZ; oynatici
+       yerine aciklayici mesaj + kaynak linki gosterilir. (PIXELDRAIN ayrica
+       kaldirilan.js'e eklendi: uc nokta 301 ile ana sayfaya gidiyor, alan adi
+       park edilmis.) */
+    if (hostYok(GOMULEMEZ_HOST, host)) return null;
     return s;
   }catch(e){ return s; }
 }
@@ -644,7 +731,12 @@ function firstUrlLink(ep){
 }
 function ytCmd(url, outName){ return 'yt-dlp "'+safeArg(url)+'" -o "'+fsSafe(outName)+'"'; }
 function buildIndirScripts(slug, data, tumu){
-  const rows = data.map(ep=>({ep, links: kaldirilanFiltre(ep.links).filter(l=>l.tip==='url')}))
+  /* B9 düzeltmesi: burada yönetici eklemeleri (eklenen.js) ÜSTÜNLÜĞÜNE
+     kaldırılıyordu. Tekil "Videoyu indir" düğmesi eklemeleri alıyordu
+     (bolumIndirLinki), anime geneli "Animeyi indir" betiği almıyordu —
+     iki yol, iki farklı gerçek. Artık ikisi de eklemeleri dahil eder. */
+  const rows = data.map(ep=>({ep, links: kaldirilanFiltre(ep.links).filter(l=>l.tip==='url')
+                                          .concat(eklenenLinkler(slug, ep, data).filter(l=>l.tip==='url'))}))
                    .filter(x=> x.links.length);
   const b = ['@echo off','chcp 65001 >nul','rem TurkAnime Arsiv - '+slug,
              'rem yt-dlp gerekli: https://github.com/yt-dlp/yt-dlp',
@@ -658,8 +750,13 @@ function buildIndirScripts(slug, data, tumu){
       let nm = base;
       if (tumu && i>0) nm = base+' ('+fsSafe(l.player)+')';
       const u = safeArg(l.url);
-      const urlB = u.replace(/%/g,'%%');   // bat %% kuralı
-      b.push('yt-dlp "'+urlB+'" -o "'+nm+'.mp4"');
+      /* B20 düzeltmesi: URL'de % çiftlendiği hâlde ÇIKTI ADI çiftlenmiyordu.
+         Bugün `nm` yalnızca tam sayı + [a-z0-9-().] içerdiği için kazara
+         güvenliydi; bir gün slug/player adı % içerse .bat bozulurdu.
+         İki taraf da aynı kurala göre çiftleniyor. */
+      const urlB = u.replace(/%/g,'%%');
+      const nmB  = nm.replace(/%/g,'%%');
+      b.push('yt-dlp "'+urlB+'" -o "'+nmB+'.mp4"');
       s.push('yt-dlp "'+u+'" -o "'+nm+'.mp4"');
     });
   }
@@ -676,9 +773,9 @@ function indirFile(name, content, mime){
 
 /* ---- tek link indirme betiği (.bat/.sh) — M2: player'daki "Videoyu indir" butonu ----
    Link seçimi: kaldirilan hariç + yönetici eklemeleri dahil; ilk uygun. */
-function bolumIndirLinki(slug, ep){
+function bolumIndirLinki(slug, ep, data){
   if (!ep || !Array.isArray(ep.links)) return null;
-  return kaldirilanFiltre(ep.links).filter(l=> l.tip==='url').concat(eklenenLinkler(slug, ep))[0] || null;
+  return kaldirilanFiltre(ep.links).filter(l=> l.tip==='url').concat(eklenenLinkler(slug, ep, data))[0] || null;
 }
 /* Windows UA → .bat (CRLF), diğerleri → .sh (LF); blob ile indirilir. */
 function linkIndirScript(slug, ad, url, batMi){
@@ -724,7 +821,7 @@ function resolveBoxHtml(u, list){
 }
 function bindResolveBox(box){
   box.querySelectorAll('.copybtn').forEach(x=>{
-    x.onclick = ()=> copyText(x.dataset.cmd).then(()=> flashDone(x,'kopyalandı ✓'));
+    x.onclick = ()=> copyText(x.dataset.cmd).then(ok=> flashDone(x, ok?'kopyalandı ✓':'pano yazılamadı', ok?1400:2600));
   });
 }
 async function showResolve(btn, u){
@@ -740,7 +837,16 @@ async function showResolve(btn, u){
     box.innerHTML = resolveBoxHtml(u, list);
     bindResolveBox(box);
   }catch(err){
-    btn.title = err.message; flashDone(btn, 'hata: '+err.message, 2400);
+    /* DÜZELTME: restore parametresi verilmezse flashDone btn.innerHTML'i
+       YAKALAR = 'çözülüyor…'. Alttaki satır gerçek metni geri yazdıktan 2400 ms
+       sonra timeout 'çözülüyor…'ü geri koyuyordu: hata mesajı siliniyor ve
+       düğme kalıcı olarak yanlış durumda kalıyordu.
+       DİKKAT: disabled, flashDone ÖNCESİ çözülmeli — yoksa düğme kalıcı
+       devre dışı kalır (regresyon). */
+    btn.disabled = false;
+    btn.title = err.message;
+    flashDone(btn, 'hata: '+err.message, 2400, old);
+    return;
   }
   btn.disabled = false; btn.textContent = old;
 }
@@ -757,11 +863,12 @@ function searchAnime(q){
   for (const a of ANIME){
     let score = 0, ok = true;
     for (const t of toks){
-      if (a.nTok.has(t)) continue;                                  // tam kelime
+      if (a.nTok.has(t)) continue;                                    // başlıkta tam kelime (0)
+      if (a.sTok.has(t)){ score += 3; continue; }                     // yalnızca slug'da (3) — zayıf
       let pre = false;
       for (const w of a.tokArr){ if (w.startsWith(t)){ pre = true; break; } }
-      if (pre){ score += 1; continue; }                             // kelime başı: "mon" → monogatari
-      if (t.length>=3 && a.hay.includes(t)){ score += 2; continue; } // kelime ortası
+      if (pre){ score += 1; continue; }                               // kelime başı: "mon" → monogatari
+      if (t.length>=3 && a.hay.includes(t)){ score += 2; continue; }  // kelime ortası
       ok = false; break;
     }
     if (ok) scored.push({a, score});
@@ -967,7 +1074,7 @@ function alOneriKapak(){   // ana sayfa "günün önerisi" kapak + gerçek banne
   if (t){
     uygula(t);
     const f = document.querySelector('.feat');
-    if (f && (t.b || t.c)) f.classList.add('feat-banner'), f.style.setProperty('--featimg', 'url("'+(t.b||t.c)+'")');
+    if (f && (t.b || t.c)) f.classList.add('feat-banner'), f.style.setProperty('--featimg', 'url("'+(t.b||t.c).replace(/["\\)]/g,'')+'")');
     return;
   }
   const k = alKayit(a.slug);
@@ -982,8 +1089,16 @@ const dayKey = ()=>{ const d=new Date(); return d.getFullYear()*10000+(d.getMont
 let _goodPool = null, dailyShift = 0, recShift = 0;
 const goodPool = ()=> _goodPool || (_goodPool = ANIME.filter(a=>a.eps>=12 && a.urls>0));
 const KATS = [
-  {id:'film',  ad:'Filmler',            ic:'film',   h:350, f:a=>/\b(movie|film)\b/i.test(a.baslik||'')},
-  {id:'ova',   ad:'OVA ve özel bölümler',ic:'star',  h:268, f:a=>/\b(ova|ona|special)\b/i.test(a.baslik||'')},
+  /* M11 düzeltmesi: JS'te `\b` = [A-Za-z0-9_] tabanlıdır. `\bmovie\b`
+     "Movies" / "Movie 2" / "Filmlere" / "Film Arşivi" ile EŞLEŞMEZ; üstelik
+     Türkçedeki bağımsız "ona" zamirine de yol açıyordu. Artık son ekler
+     kabul ediliyor ve slug da taranıyor — "kimi-no-iru-machi-ova",
+     "to-heart-2-ova", "…-specials" gibi yalnız slug'da duran seriler de
+     yakalanıyor. */
+  {id:'film',  ad:'Filmler',            ic:'film',   h:350,
+   f:a=>/(movies?|films?|sinema)/i.test((a.baslik||'')+' '+a.slug)},
+  {id:'ova',   ad:'OVA ve özel bölümler',ic:'star',  h:268,
+   f:a=>/(ova|ona|specials?)/i.test((a.baslik||'')+' '+a.slug)},
   {id:'tek',   ad:'Tek bölümlükler',    ic:'bolt',   h:42,  f:a=>a.eps===1},
   {id:'kisa',  ad:'Kısa seriler',       ic:'clock',  h:178, f:a=>a.eps>=2 && a.eps<=13},
   {id:'sezon', ad:'Sezonluk seriler',   ic:'tv',     h:205, f:a=>a.eps>=14 && a.eps<=49},
@@ -1031,10 +1146,10 @@ function bindLanding(){
   const r = document.getElementById('recNext');
   if (r) r.onclick = ()=>{ recShift++; renderHome(); };
   appEl().querySelectorAll('[data-kat]').forEach(el=>{
-    el.onclick = ()=>{ listFiltre = {t:'kat', v:el.dataset.kat}; listPage = 1; renderHome(); window.scrollTo(0,0); };
+    el.onclick = ()=> listeFiltreUygula({t:'kat', v:el.dataset.kat});
   });
   appEl().querySelectorAll('[data-harf]').forEach(el=>{
-    el.onclick = ()=>{ listFiltre = {t:'harf', v:el.dataset.harf}; listPage = 1; renderHome(); window.scrollTo(0,0); };
+    el.onclick = (ev)=>{ ev.preventDefault(); listeFiltreUygula({t:'harf', v:el.dataset.harf}); };
   });
 }
 function listeleHtml(){
@@ -1054,6 +1169,40 @@ function listeleHtml(){
       <button class="mini" id="listBack" type="button">${ic('x')} filtre</button></div>
     ${slice.length? `<div class="grid">${slice.map(card).join('')}</div>${pagerHTML(listPage, items.length, PAGE)}`
     : `<div class="empty">Bu filtrede seri yok.</div>`}`;
+}
+
+/* ============ liste/arama durumu yönetimi (H1/H2 düzeltmesi) ============
+   HATA (28.09.2026 denetimi): `lastQuery` (arama) ve `listFiltre` (kategori/harf)
+   modül düzeyinde değişkenlerdi ve HİÇBİR yoldan sıfırlanmıyordu. İki sonuç:
+     1. Arama yapıp "Ana sayfa"ya tıklayınca (logo / üst menü / alt menü) aynı arama
+        sonuçları geliyordu — ana sayfa HİÇ açılmıyordu.
+     2. Arama yapıldıktan sonra kategori ya da harf tıklaması ÖLÜ tıklama oluyordu:
+        renderHome önce `lastQuery` dalında `return` edip `listFiltre` dalına
+        hiç ulaşmıyordu. Ayrıca hash zaten `#/ara` ise `location.hash='#/ara'`
+        ataması hashchange ÜRETMEZ -> tıklama hiçbir şey yapmıyordu.
+   Çözüm: tek giriş noktası + hash `#/` iken durum sıfırlama (route içinde). */
+function listeDurumuTemizle(){
+  lastQuery = ''; lastPage = 1;
+  listFiltre = null; listPage = 1;
+  anQ = ''; anPage = 1;
+  const q = document.getElementById('q'); if (q) q.value = '';
+}
+/* Kategori / harf filtresi uygular. Bayat arama sorgusunu ÖNCE siler, yoksa
+   renderHome arama dalında dönüp filtreyi hiç göstermez. */
+function listeFiltreUygula(f){
+  listeDurumuTemizle();
+  listFiltre = f; listPage = 1;
+  if (location.hash === '#/ara' || !location.hash) renderHome();  // hash değişmez
+  else location.hash = '#/ara';
+  window.scrollTo(0,0);
+}
+/* "Ana sayfa": arama kutusu, kategori ve harf filtresini temizler. */
+function anaSayfayaDon(ev){
+  if (ev) ev.preventDefault();
+  listeDurumuTemizle();
+  if (location.hash === '#/' || !location.hash) renderHome();
+  else location.hash = '#/';
+  window.scrollTo(0,0);
 }
 
 /* ============ ana sayfa / arama sonuçları ============ */
@@ -1077,7 +1226,9 @@ function renderHome(){
   if (listFiltre){
     appEl().innerHTML = listeleHtml();
     const back = document.getElementById('listBack');
-    if (back) back.onclick = ()=>{ listFiltre = null; listPage = 1; renderHome(); window.scrollTo(0,0); };
+    /* "✕ filtre" de arama sorgusunu temizlemeli: aksi halde temizleme
+       sonrası ana sayfa yerine bayat arama sonuçları açılır. */
+    if (back) back.onclick = ()=>{ listeDurumuTemizle(); renderHome(); window.scrollTo(0,0); };
     appEl().querySelectorAll('.pager button[data-pg]').forEach(b=>{
       b.onclick = ()=>{ listPage = +b.dataset.pg; renderHome(); window.scrollTo(0,0); };
     });
@@ -1093,13 +1244,21 @@ let anSort = 'eps', anQ = '', anPage = 1;
 function renderAnimeler(){
   document.title = 'Animeler — tüm liste | TürkAnime Arşiv';
   let items;
+  /* M1/M2/M3 düzeltmesi: sıralama seçeneği ARAMA YAPILMIŞKEN DE uygulanıyordu
+     — `anSort!=='ad'` koşulu yüzünden "başlık (A→Z)" seçiliyken liste
+     searchAnime'in alaka sırasında kalıyordu, seçim kutusu yanlış gösteriyordu.
+     Ayrıca iki ayrı karşılaştırıcı vardı: biri 'tr' yerel ayarı kullanıyor,
+     diğeri kullanmıyordu (makineye bağlı sıra). Artık tek karşılaştırıcı. */
+  const cmpAd  = (a,b)=> a.nTitle.localeCompare(b.nTitle,'tr') || a.slug.localeCompare(b.slug);
+  const cmpEps = (a,b)=> b.eps-a.eps || b.urls-a.urls || cmpAd(a,b);
+  const cmpUrl = (a,b)=> b.urls-a.urls || b.eps-a.eps || cmpAd(a,b);
   if (anQ){
     items = searchAnime(anQ);
-    if (anSort!=='ad') items = items.slice().sort((a,b)=> b.eps-a.eps || b.urls-a.urls || a.nTitle.localeCompare(b.nTitle));
+    if (anSort==='urls') items = items.slice().sort(cmpUrl);
+    else if (anSort==='ad') items = items.slice().sort(cmpAd);
+    else items = items.slice().sort(cmpEps);
   } else {
-    items = ANIME.slice().sort(anSort==='urls' ? (a,b)=> b.urls-a.urls || b.eps-a.eps || a.nTitle.localeCompare(b.nTitle)
-             : anSort==='ad' ? (a,b)=> a.nTitle.localeCompare(b.nTitle,'tr')
-             : (a,b)=> b.eps-a.eps || b.urls-a.urls || a.nTitle.localeCompare(b.nTitle,'tr'));
+    items = ANIME.slice().sort(anSort==='urls' ? cmpUrl : anSort==='ad' ? cmpAd : cmpEps);
   }
   const pages = Math.max(1, Math.ceil(items.length/PAGE));
   if (anPage>pages) anPage = pages;
@@ -1140,7 +1299,14 @@ function renderKategoriler(){
   KATS.forEach(k=>{ if (k.n==null) k.n = ANIME.filter(k.f).length; });
   const harfSay = new Map();
   for (const a of ANIME){
-    const c = (a.nTitle[0]||'0');
+    const c = (a.nTitle[0]||'');
+    /* M13 düzeltmesi: norm() sonrası nTitle boş kalırsa (başlık yalnızca
+       harf/rakam dışı karakterlerden oluşuyorsa) eskiden bu anime "0-9"
+       ROZETİNE sayılıyordu, ama filtre `/^[0-9]/.test('')` false olduğu için
+       hiç listelenmiyordu: sayaç ile liste birbirini tutmuyordu.
+       Boş başlık hiçbir harfe sayılmaz (ve varsa liste de boş kalır —
+       tutarlılık). */
+    if (!c) continue;
     const k = /[0-9]/.test(c) ? '0' : c.toUpperCase();
     harfSay.set(k, (harfSay.get(k)||0)+1);
   }
@@ -1157,28 +1323,45 @@ function renderKategoriler(){
     <div class="sh"><h2>En çok url'li 20 anime</h2></div>
     <div class="rail">${enCokUrl.map(card).join('')}</div>`;
   appEl().querySelectorAll('[data-kat]').forEach(el=>{
-    el.onclick = ()=>{ listFiltre = {t:'kat', v:el.dataset.kat}; listPage = 1; location.hash = '#/ara'; };
+    el.onclick = ()=> listeFiltreUygula({t:'kat', v:el.dataset.kat});
   });
   appEl().querySelectorAll('[data-harf]').forEach(el=>{
-    el.onclick = (ev)=>{ ev.preventDefault(); listFiltre = {t:'harf', v:el.dataset.harf}; listPage = 1; location.hash = '#/ara'; };
+    el.onclick = (ev)=>{ ev.preventDefault(); listeFiltreUygula({t:'harf', v:el.dataset.harf}); };
   });
 }
 
 /* ============ anime sayfası ============ */
 function renderAnime(slug, data){
   const meta = ANIME.find(a=>a.slug===slug) || {baslik:slug, urls:0, masks:0, top:[]};
-  const pages = Math.max(1, Math.ceil(data.length/EP_PAGE));
+  /* SEZON FILTRESI: dosyanin icinde hem isaretli hem isaretsiz bolum varsa gosterilir.
+     Isaretsiz bolumler 1. sezon kabul edilir. Dosyanin ADI zaten bir sezon
+     belirtiyorsa (orn. kimi-ni-todoke-2nd-season) sekme gosterilmez: o dosyanin
+     tamami tek sezondur, isaretsiz yazilan bolumler de ayni sezonun devamidir. */
+  const sezonlar = sezonListesi(slug, data);
+  if (sezonlar && sezonlar.indexOf(epSezon)<0) epSezon = sezonlar[0];
+  const goster = sezonlar ? data.filter(e=>sezonNo(e)===epSezon) : data;
+  const pages = Math.max(1, Math.ceil(goster.length/EP_PAGE));
   if (epPage>pages) epPage = pages;
-  const slice = data.slice((epPage-1)*EP_PAGE, epPage*EP_PAGE);
+  const slice = goster.slice((epPage-1)*EP_PAGE, epPage*EP_PAGE);
   const st = {url:0, mask:0};
   for (const ep of data) for (const l of kaldirilanFiltre(ep.links)){
     if (l.tip==='url') st.url++; else if (l.tip==='mask') st.mask++;
   }
   const bnr = alBanner(slug);
   const hu = hueOf(slug);
+  const sezonRow = sezonlar ? `<div class="chiprow" id="sezonRow"><span class="lbl">Sezon</span>` +
+    sezonlar.map(s=>{ const n = data.filter(e=>sezonNo(e)===s).length;
+      return `<button class="fchip sezbtn${s===epSezon?' on':''}" data-sz="${s}" type="button" title="${n} bölüm">${s}. Sezon <b>${n}</b></button>`; }).join('') +
+    `</div>` : '';
   appEl().innerHTML = `
     <div class="crumb"><a href="#/ara">Arama</a><span class="sep">›</span><span>${esc(meta.baslik)}</span></div>
-    <div class="hero" style="--h:${hu};--g:${(hu+35)%360}${bnr?`;--heroimg:url('${bnr}')`:''}">
+    <!-- L2 düzeltmesi: bnr (AniList banner/cover ya da localStorage önbelleği)
+         üçüncü taraf verisidir ve KAÇIŞ UYGULANMADAN style="..." içine
+         gömülüyordu — dosyadaki tek kaçışsız üçüncü taraf dizgisi.
+         Tek tırnak CSS dizesini, çift tırnak style özniteliğini, > etiketi
+         kapatırdı. esc() tek ve çift tırnağı da kaçırdığı için güvenli.
+         Değer http(s) dışındaysa zaten uygulanmaz. -->
+    <div class="hero" style="--h:${hu};--g:${(hu+35)%360}${bnr?`;--heroimg:url(&#39;${esc(bnr)}&#39;)`:''}">
     <div class="ahead">
       <div class="aposter">${poster({slug, baslik:meta.baslik, eps:data.length})}</div>
       <div class="atxt">
@@ -1198,9 +1381,10 @@ function renderAnime(slug, data){
       <span style="color:var(--tx3);font-size:12px">bat + sh üretir (yt-dlp)</span>
     </div>
     ${data.length?`
-      <div id="eplist">${slice.map(ep=>epRow(slug, ep)).join('')}</div>
-      ${pagerHTML(epPage, data.length, EP_PAGE)}
-      ${pages>1?`<div class="jump">Bölüme git: <input id="jumpNo" inputmode="numeric"> <button id="jumpGo" type="button">Git</button></div>`:''}
+      ${sezonRow}
+      <div id="eplist">${slice.map(ep=>epRow(slug, ep, data)).join('')}</div>
+      ${pagerHTML(epPage, goster.length, EP_PAGE)}
+      ${data.length>EP_PAGE?`<div class="jump">Bölüme git: <input id="jumpNo" inputmode="numeric" placeholder="no veya 1-12"> <button id="jumpGo" type="button">Git</button><span class="jhint"> ${data.length} bölümün tamamında arar</span></div>`:''}
     `:`<div class="empty"><div class="big">${ic('film')}</div>Bu animede bölüm kaydı yok.</div>`}
     ${relatedHtml(slug)}
   `;
@@ -1224,16 +1408,80 @@ function renderAnime(slug, data){
   });
   const jg = $('#jumpGo');
   if (jg) jg.onclick = ()=>{
-    const n = parseInt($('#jumpNo').value,10);
-    if (isNaN(n)) return;
-    let idx = data.findIndex(e=>e.no===n);
-    if (idx===-1) idx = data.findIndex(e=>e.slug.indexOf('-'+n+'-bolum')!==-1);
-    if (idx===-1){ alert('Bölüm bulunamadı: '+n); return; }
-    epPage = Math.floor(idx/EP_PAGE)+1;
-    renderAnime(slug, data);
-    const el = appEl().querySelectorAll('.ep')[idx-(epPage-1)*EP_PAGE];
-    if (el){ el.scrollIntoView({block:'center'}); el.style.borderColor='var(--ac2)'; }
+    const ham = ($('#jumpNo').value||'').trim();
+    const n = parseInt(ham,10);
+    if (isNaN(n)){
+      /* M7: sayı değilse slug ile dene (OVA/special gibi `no:null` bölümler
+         `…-1`, `…-ova-1` ile biter; eski kural yalnız `-<n>-bolum` idi). */
+      const q = norm(ham);
+      if (!q){ alert('Bir bölüm numarası ya da adı yaz.'); return; }
+      const es = data.filter(e=> norm((e.ad||'')+' '+e.slug).indexOf(q)!==-1);
+      if (!es.length){ alert('Bölüm bulunamadı: '+ham); return; }
+      if (es.length>1){
+        alert('Bu ad '+es.length+' bölümde geçiyor:\n\n'+es.slice(0,10).map(e=>'#'+(e.no!=null?e.no:'★')+' '+(e.ad||e.slug)).join('\n')
+              + (es.length>10?'\n…':'')+'\n\nLütfen bölüm numarası ile deneyin.');
+        return;
+      }
+      gitBölüme(es[0]); return;
+    }
+    /* M8: aynı numara birden çok bölümde geçebilir. Ölçülen veri:
+       pokemon 316 bölüm, no 1..276; 40 numara iki kez geçiyor
+       (1. sezon bloğu + 5./6. sezon bloğu) -> ambNo(pokemon).size = 40.
+       detective-conan-tv'de 3 hem "3. Bölüm" hem "OVA 3. Bölüm".
+       Eskiden daima İLK eşleşme atlanıyordu, diğerlerine yol yoktu.
+       Düzeltme: önce ETKİN SEZON içinde tekil eşleşme ara (kullanıcı zaten
+       bir sezona bakıyorsa), yoksa tüm dosyada ilkine git; ama
+       ALTERNATİFLERİ sessizce yutma, kutunun altında listele. */
+    const tum = data.filter(e=> e.no===n);
+    if (tum.length){
+      const burada = sezonlar ? tum.filter(e=>sezonNo(e)===epSezon) : tum;
+      const secilen = burada.length===1 ? burada[0] : tum[0];
+      gitBölüme(secilen);
+      if (tum.length>1) cokluUyarisi(secilen, tum);
+      return;
+    }
+    {
+      const q2 = norm(String(n));
+      const es2 = data.filter(e=> e.no==null && e.slug.split('-').pop()===q2);
+      if (es2.length){ gitBölüme(es2[0]); if (es2.length>1) cokluUyarisi(es2[0], es2); return; }
+      alert('Bölüm bulunamadı: '+n); return;
+    }
   };
+  /* Çoklu eşleşme uyarısı: alert() yerine kutunun altına yazılır —
+     hem engelleyici değil hem de sessizce yutmaz. */
+  function cokluUyarisi(gidilen, hepsi){
+    const diger = hepsi.filter(e=> e!==gidilen);
+    if (!diger.length) return;
+    let el = document.getElementById('jumpWarn');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'jumpWarn';
+      el.className = 'jhint';
+      el.style.cssText = 'display:block;margin:6px 0 0';
+      const jb = document.getElementById('jumpGo');
+      (jb ? jb.parentNode : appEl()).appendChild(el);
+    }
+    el.innerHTML = '⚠ #'+(gidilen.no!=null?gidilen.no:'★')+' bu dosyada '+hepsi.length+
+      ' bölümde daha geçiyor — <b>'+(gidilen.ad||gidilen.slug)+'</b> açıldı. Diğerlerine listeden tıklayarak ulaş: '+
+      diger.slice(0,6).map(e=>esc(e.ad||e.slug)).join(' · ')+(diger.length>6?' …':'');
+  }
+  /* Hedef bölümün sezonu seçili değilse sezona OTOMATİK geçilir (M7):
+     eskiden kutu yalnız sezon filtresinin GÖRDÜĞÜ bölümlerde arıyordu, bu
+     yüzden başka sezondaki bir bölüme "bulunamadı" diyordu. */
+  function gitBölüme(ep){
+    const s = sezonNo(ep);
+    if (sezonlar && sezonlar.indexOf(s)!==-1 && s!==epSezon) epSezon = s;
+    const gl = sezonlar ? data.filter(e=>sezonNo(e)===epSezon) : data;
+    const ix = gl.indexOf(ep);
+    if (ix===-1){ alert('Bölüm bulunamadı: '+(ep.ad||ep.slug)); return; }
+    epPage = Math.floor(ix/EP_PAGE)+1;
+    renderAnime(slug, data);
+    const el = appEl().querySelectorAll('.ep')[ix-(epPage-1)*EP_PAGE];
+    if (el){ el.scrollIntoView({block:'center'}); el.style.borderColor='var(--ac2)'; }
+  }
+  appEl().querySelectorAll('.sezbtn').forEach(b=>{
+    b.onclick = ()=>{ epSezon = +b.dataset.sz; epPage = 1; renderAnime(slug, data); window.scrollTo(0,0); };
+  });
   alZenginlestir(slug, meta);   // PR1: AniList kapak + tür + puan + özet (başarısızsa sessiz)
 }
 
@@ -1300,7 +1548,7 @@ function epNavHtml(slug, data, ep){
   const i = data.indexOf(ep);
   const prev = i>0 ? data[i-1] : null;
   const next = (i>=0 && i<data.length-1) ? data[i+1] : null;
-  const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e);
+  const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e, data);
   return `<div class="epnav">
     ${prev? `<a class="btn ghost" href="${href(prev)}" title="${esc(prev.ad)}">${ic('al')} Önceki Bölüm</a>`
           : `<span class="btn ghost off">${ic('al')} Önceki Bölüm</span>`}
@@ -1314,15 +1562,22 @@ function epNavHtml(slug, data, ep){
 
 /* ============ sağdaki bölüm listesi (oynatıcı sayfası) ============ */
 function epSideHtml(slug, data, curEp){
-  const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e);
+  const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e, data);
+  const sz = sezonListesi(slug, data);
+  const curSz = curEp ? sezonNo(curEp) : 1;
+  const sezonRowSide = sz ? `<div class="els-search" id="sezonRowSide"><span class="lbl" style="align-self:center;padding:0 6px 0 0;font-size:11px;color:var(--tx3)">Sezon</span>` +
+    sz.map(s=>{ const n = data.filter(e=>sezonNo(e)===s).length;
+      return `<button class="fchip sezbtn2${s===curSz?' on':''}" data-sz="${s}" type="button">${s}. Sezon <b>${n}</b></button>`; }).join('') +
+    `</div>` : '';
   return `<aside class="eplist-side">
     <div class="els-head">${ic('list')} Bölüm Listesi <b>${data.length}</b></div>
+    ${sezonRowSide}
     <div class="els-search">${ic('search')}<input id="epFilter" type="search" placeholder="Bölüm filtrele..." autocomplete="off" spellcheck="false" aria-label="Bölüm filtrele"></div>
     <div class="els-body" id="elsBody">
       ${data.map(e=>{
         const on = e===curEp;
         const no = e.no!=null ? String(e.no) : '★';
-        return `<a class="els-item${on?' on':''}" href="${href(e)}" data-t="${esc((no+' '+(e.ad||'')+' '+(e.slug||'')).toLowerCase())}">
+        return `<a class="els-item${on?' on':''}" href="${href(e)}" data-sz="${sezonNo(e)}" data-t="${esc(norm(no+' '+(e.ad||'')+' '+(e.slug||'')))}">
           <span class="n">${esc(no)}</span><span class="t">${esc(e.ad||e.slug)}</span>
         </a>`;
       }).join('')}
@@ -1336,17 +1591,41 @@ function bindEpSide(slug, data){
   const aktif = body.querySelector('.els-item.on');
   if (aktif) body.scrollTop = Math.max(0, aktif.offsetTop - body.clientHeight/2 + aktif.clientHeight/2);
   const f = document.getElementById('epFilter');
-  if (!f) return;
-  f.oninput = ()=>{
-    const q = f.value.trim().toLowerCase();
+  const sr = document.getElementById('sezonRowSide');
+  /* ============ TEK KAYNAK: sezon + metin filtresi BİRLİKTE ============
+     HATA (28.09.2026): iki bağımsız olay her biri `a.hidden` YAZIYORDU ve
+     diğerinin durumunu görmüyordu. Sonuçlar:
+       - Metin kutusu doluyken sezon çipine tıklamak 316 satırın HEPSİNİ
+         geri gösteriyordu (kutu boş olmadığı için `hidden = … && false`).
+       - Metin kutusuna bir harf yazmak sezon filtresini TAMAMEN siliyordu.
+       - "Eşleşen bölüm yok." yazısı sezon çipinde güncellenmediği için
+         hem boş liste hem dolu liste aynı anda ekranda durabiliyordu.
+     Artık ikisi de AND lenerek tek fonksiyondan uygulanır ve sayaç da oradan
+     gelir. Metin tarafında norm() kullanılıyor: kenar listede Türkçe arama,
+     ana aramada olduğu gibi çalışsın ('ı' yazınca 'i' de bulunsun). */
+  const onAktif = sr ? sr.querySelector('.sezbtn2.on') : null;
+  let secSz = onAktif ? onAktif.dataset.sz : '';
+  const uygula = ()=>{
+    const q = f ? norm(f.value.trim()) : '';
     let gorunen = 0;
     body.querySelectorAll('.els-item').forEach(a=>{
-      const ok = !q || a.dataset.t.indexOf(q)!==-1;
-      a.hidden = !ok; if (ok) gorunen++;
+      const okSz = !secSz || (a.dataset.sz||'1') === String(secSz);
+      const okQ  = !q || a.dataset.t.indexOf(q)!==-1;
+      a.hidden = !(okSz && okQ);
+      if (!a.hidden) gorunen++;
     });
     const bos = document.getElementById('elsEmpty');
     if (bos) bos.hidden = gorunen>0;
   };
+  if (sr) sr.querySelectorAll('.sezbtn2').forEach(b=>{
+    b.onclick = ()=>{
+      secSz = (b.dataset.sz === secSz) ? '' : b.dataset.sz;   // aynı çipe tekrar = kaldır
+      sr.querySelectorAll('.sezbtn2').forEach(x=>x.classList.toggle('on', x.dataset.sz===secSz));
+      uygula();
+    };
+  });
+  if (f) f.oninput = uygula;
+  uygula();
 }
 
 /* ============ bölüm seçenekleri sayfası ============ */
@@ -1356,16 +1635,27 @@ function renderOptions(slug, data, bolumId){
   const okey = slug+'|'+bolumId;
   if (optKey !== okey){ optKey = okey; optSelPlayers = new Set(); optSelFansubs = new Set(); }
   const meta = ANIME.find(a=>a.slug===slug) || {baslik:slug};
-  const num = ep.no!=null?String(ep.no):ep.slug;
+  /* BÖLÜM NUMARASI — belirsiz `no` varsa slug kullanılır.
+     Eski hâli `ep.no!=null?String(ep.no):ep.slug` idi: pokemon'da 5./6. sezonun
+     3. bölümünde kopyalanan komut "--bolum 3" diyordu, o da 1. sezonun 3.
+     bölümünü indiriyordu (findEp ilk eşleşmeyi döner). bolumIdFor ile aynı
+     kararı veriyoruz ki ADRES, KOMUT ve DOSYA ADI birbirini tutsun. */
+  const num = (ep.no!=null && !ambNo(data).has(String(ep.no))) ? String(ep.no) : ep.slug;
   const gorsel = optionsFor(ep).filter(x=> !kaldirilanSet().has(x.l.url));  // M2
   /* yönetici eklemeleri: sentetik indeksle seçeneklere katılır (EKLENEN_I_BASE) */
-  const gorselT = gorsel.concat(eklenenLinkler(slug, ep).map((l,k)=>({l, i: EKLENEN_I_BASE + k})));
-  /* M3/M4: player + fansub çipleri (OR içinde, boyutlar arası AND/kesişim) */
+  const gorselT = gorsel.concat(eklenenLinkler(slug, ep, data).map((l,k)=>({l, i: EKLENEN_I_BASE + k})));
+  /* M3/M4: player + fansub çipleri (OR içinde, boyutlar arası AND/kesişim)
+     B7 düzeltmesi: sayaçlar FİLTRE UYGULANMADAN önceki tüm gorselT'den
+     hesaplanıyordu. "Player=MAIL + Fansub=AniTürk" seçildiğinde 0 satır
+     çıkabiliyor ama çipler hâlâ "MAIL 3 / AniTürk 5" yazıyordu — sayaçlar
+     yalan söylüyordu. Artık her boyut, DIĞER boyutun filtresi uygulanmış
+     küme üzerinden sayılır (klasik fasetli sayım). Kendi seçimi kendi
+     sayımına girmez; böylece "temizle" yolunu da korur. */
+  const pBase = gorselT.filter(x=> !optSelFansubs.size || optSelFansubs.has(x.l.fansub));
+  const fBase = gorselT.filter(x=> !optSelPlayers.size || optSelPlayers.has(x.l.player));
   const pCount = new Map(), fCount = new Map();
-  for (const x of gorselT){
-    pCount.set(x.l.player, (pCount.get(x.l.player)||0)+1);
-    if (x.l.fansub) fCount.set(x.l.fansub, (fCount.get(x.l.fansub)||0)+1);
-  }
+  for (const x of pBase) pCount.set(x.l.player, (pCount.get(x.l.player)||0)+1);
+  for (const x of fBase) if (x.l.fansub) fCount.set(x.l.fansub, (fCount.get(x.l.fansub)||0)+1);
   const shown = gorselT
     .filter(x=> !optSelPlayers.size || optSelPlayers.has(x.l.player))
     .filter(x=> !optSelFansubs.size || optSelFansubs.has(x.l.fansub));
@@ -1386,6 +1676,7 @@ function renderOptions(slug, data, bolumId){
       <button class="btn" id="epIndir" type="button">${ic('dl')} Bu bölümü indir</button>
       <span style="color:var(--tx3);font-size:13px">${shown.length} seçenek${filtreli?' · filtreli':''}</span>
       ${ADMIN&&kaldirilanSay()?`<button class="btn ghost" id="exportBtn" type="button" title="henüz repoya eklenmemiş kaldırmaları el_degisiklikleri.json olarak indir">${ic('dl')} değişiklikleri dışa aktar (${kaldirilanSay()})</button>`:''}
+      ${ADMIN&&sonKaldirilan?`<button class="btn ghost mini" data-act="geri-al" type="button" title="${esc(sonKaldirilan)}">${ic('rotate')} son kaldırılanı geri al</button>`:''}
     </div>
     ${chipRowHtml('Player', pCount, optSelPlayers, 'p')}
     ${chipRowHtml('Fansub', fCount, optSelFansubs, 'f')}
@@ -1403,7 +1694,7 @@ function renderOptions(slug, data, bolumId){
   const ei = $('#epIndir');
   if (ei) ei.onclick = ()=>{
     if (!ilkUrl){ alert('Bu bölümde indirilebilir url linki yok.'); return; }
-    copyText(ytCmd(ilkUrl.url, num+'. Bolum.mp4')).then(()=> flashDone(ei,'kopyalandı ✓',1500, ic('dl')+' Bu bölümü indir'));
+    copyText(ytCmd(ilkUrl.url, num+'. Bolum.mp4')).then(ok=> flashDone(ei, ok?'kopyalandı ✓':'pano yazılamadı', ok?1500:2600, ic('dl')+' Bu bölümü indir'));
   };
   const ex = $('#exportBtn');
   if (ex) ex.onclick = ()=>{
@@ -1438,8 +1729,14 @@ function renderOptions(slug, data, bolumId){
       ev.stopPropagation();
       const act = b.dataset.act, u = b.dataset.url;
       if (act==='kaldir'){
+        /* B12: onay + kapsam uyarısı (kaldırma URL'e göre GLOBAL) */
+        if (!confirm('Bu bağlantı kaldırılacak:\n\n'+u+'\n\nNot: kaldırma bağlantıya göre yapılır — bu link arşivdeki TÜM bölümlerde gizlenecek.\n\nDevam edilsin mi?')) return;
         linkKaldir(u);
         renderOptions(slug, data, bolumId);
+        return;
+      }
+      if (act==='geri-al'){
+        if (linkGeriAl()) renderOptions(slug, data, bolumId);
         return;
       }
       if (act==='dl-mp4'){ copyText(ytCmd(u, num+'. Bolum.mp4')).then(()=> flashDone(b,'✓')); return; }
@@ -1455,15 +1752,68 @@ function renderOptions(slug, data, bolumId){
    Sıra: player (tr) → fansub (tr). Varsayılan seçim: ilk kaynak. */
 let plySelFansubs = new Set();   // player sayfası fansub filtresi (bölüm başına sıfırlanır)
 let plyKey = '';
+/* KAYNAK çipi sırası: önce oynatıcı önceliği (enIyiKaynak ile AYNI sıra),
+   sonra player adı, sonra fansub. ÖNCE alfabetik sıralama + "ilk olan seçilir"
+   kuralıydı; bu yüzden otomatik seçilen çip (örn. SIBNET) satırın ORTASINDA
+   kalıyordu. Artık seçilen kaynak her zaman ilk çip. */
 function kaynakSira(kay){
   return kay.slice().sort((a,b)=>{
+    const po = playerOncelik(a.l.player) - playerOncelik(b.l.player);
+    if (po!==0) return po;
     const pc = String(a.l.player).localeCompare(String(b.l.player),'tr');
     if (pc!==0) return pc;
     return String(a.l.fansub).localeCompare(String(b.l.fansub),'tr');
   });
 }
+/* Oynatici oncelik sirasi — 2026-09-28 canli sitede olculerek yazildi.
+   ONCE: alfabetik (kaynakSira) + "ilk oge secilir" (enIyiKaynak). Bu, Google
+   Drive'i her zaman kazandirirdi: one-piece 1. bolumde 8 adet SIBNET varken
+   site GDRIVE'i otomatik aciyordu.
+   SIMDI: gomulebilir kaynaklar oncelik tablosuna gore; olculemeyenler ortada;
+   gomulemeyenler hicbir zaman OTOMATIK secilmez.
+   Kanit: bkz. YENIDEN-OLCUM.md (21 player, 63 rota) */
+const PLAYER_ONCE = {
+  /* calistigi dogrulanmis, guvenilir */
+  SIBNET:10, MAIL:20, UQLOAD:30, MP4UPLOAD:40, CYBERFILE:50, MEGA:60,
+  /* calistigi dogrulanmis, daha riskli */
+  VK:70,          /* calisiyor ama hash suresi dolabilir; bazi linklerde DMCA */
+  HDVID:80, 'OK.RU':90, STREAMWISH:100, LULUVDO:110,
+  /* bu agdan DOGRULANAMADI (orta) */
+  ODNOKLASSNIKI:200, VIDEA:210, CDA:220, DAILYMOTION:230, GDRIVE:240,
+  /* bilinen sorunlu */
+  VOE:300,        /* yarisindan fazlasi calisiyor, 404 donenler var */
+  DOODSTREAM:400, /* yonlendirme zinciri kirik: dood.watch->vide0.net->playmogo.com */
+  /* olamayanlar: hicbir zaman otomatik secilmez */
+  YADISK:900, PIXELDRAIN:990, BYSE:999
+};
+function hostYok(tablo, host){ return !!tablo && Object.prototype.hasOwnProperty.call(tablo, host); }
+function playerOncelik(p){
+  /* hasOwnProperty ZORUNLU: PLAYER_ONCE normal {} nesnesi; üst kısmı OLMAYAN
+     bir oyuncu adı 'constructor' / 'toString' / '__proto__' ise prototip
+     zincirinden TRUTHY bir değer gelir ve o oyuncu yanlışlıkla en düşük
+     öncelikli sayılırdı. */
+  const k = String(p||'').toUpperCase();
+  return Object.prototype.hasOwnProperty.call(PLAYER_ONCE, k) ? PLAYER_ONCE[k] : 500;
+}
+/* iframe'e konulamayan host: hicbir zaman otomatik secilmez (GOMULEMEZ_HOST'a bakin) */
+function kaynakGomulebilir(l){
+  if (!l || l.tip!=='url') return false;
+  if (/^https?:\/\//i.test(l.url||'')){
+    try{ return !hostYok(GOMULEMEZ_HOST, new URL(cleanRawUrl(l.url)).hostname.replace(/^www\./,'')); }
+    catch(e){ return false; }
+  }
+  return true;
+}
 function enIyiKaynak(kay){
-  return kay[0] || null;
+  if (!kay || !kay.length) return null;
+  let best = null, bestP = Infinity;
+  for (const x of kay){
+    if (!kaynakGomulebilir(x.l)) continue;
+    const p = playerOncelik(x.l.player);
+    if (p < bestP){ bestP = p; best = x; }
+  }
+  if (best) return best;
+  return kay[0];   /* hepsi gomulemezse (YADISK gibi) ilki — mesaj gorunsun */
 }
 function fsAbbr(f){
   const s = String(f||'').trim();
@@ -1479,13 +1829,18 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
   const meta = ANIME.find(a=>a.slug===slug) || {baslik:slug};
   const okey = slug+'|'+bolumId;
   if (plyKey !== okey){ plyKey = okey; plySelFansubs = new Set(); }
-  const num = ep.no!=null?String(ep.no):ep.slug;
+  /* BÖLÜM NUMARASI — belirsiz `no` varsa slug kullanılır.
+     Eski hâli `ep.no!=null?String(ep.no):ep.slug` idi: pokemon'da 5./6. sezonun
+     3. bölümünde kopyalanan komut "--bolum 3" diyordu, o da 1. sezonun 3.
+     bölümünü indiriyordu (findEp ilk eşleşmeyi döner). bolumIdFor ile aynı
+     kararı veriyoruz ki ADRES, KOMUT ve DOSYA ADI birbirini tutsun. */
+  const num = (ep.no!=null && !ambNo(data).has(String(ep.no))) ? String(ep.no) : ep.slug;
   const cmd = `turkanime_ara.py ${slug} --bolum ${num}`;
   /* tüm görünür linkler (kaldirilan hariç + eklenen) */
   const kaldi = kaldirilanSet();
   const tumLinks = [];
   (ep.links||[]).forEach((l,i)=>{ if (!kaldi.has(l.url)) tumLinks.push({l,i}); });
-  eklenenLinkler(slug, ep).forEach((l,k)=> tumLinks.push({l, i: EKLENEN_I_BASE + k}));
+  eklenenLinkler(slug, ep, data).forEach((l,k)=> tumLinks.push({l, i: EKLENEN_I_BASE + k}));
   const gorunur = tumLinks;
   const optN = gorunur.length;
   const maskSay = gorunur.filter(x=> x.l.tip!=='url').length;
@@ -1493,6 +1848,14 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
   /* fansub filtresi (kesişim): KAYNAK çiplerini süzer */
   const fCount = new Map();
   for (const x of kayHepsi) if (x.l.fansub) fCount.set(x.l.fansub, (fCount.get(x.l.fansub)||0)+1);
+  /* ÖLÜ FİLTER TEMİZLİĞİ: plySelFansubs yalnızca başka bölüme geçince sıfırlanır.
+     "Tüm seçenekler" ekranında × ile link silinince o fansub'un tüm linkleri
+     gider; filtre geride kalır, fCount.size 1'e düşer, fansub satırı (ve
+     dolayısıyla "temizle" düğmesi) hiç render edilmez -> oyuncu kilitlenir,
+     çıkış yolu yok. Ölü girdileri burada düşürüyoruz. */
+  if (plySelFansubs.size){
+    for (const n of [...plySelFansubs]) if (!fCount.has(n)) plySelFansubs.delete(n);
+  }
   const kay = kayHepsi.filter(x=> !plySelFansubs.size || plySelFansubs.has(x.l.fansub));
   /* seçili kaynak: adresli gelen (eski konum-uyumu dahil) ya da en iyi görünür */
   let cur = null;
@@ -1501,8 +1864,16 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
     const idxRaw = parseInt(idxStr||'0',10)||0;
     cur = kay.find(x=> x.i===idxRaw && x.l.player===pName) || null;
     if (!cur){
+      /* ESKİ YER İMİ UYUMU — DÜZELTİLDİ.
+         idxRaw, ep.links içindeki GLOBAL sıradır; cands ise o oyuncunun
+         ALT KÜMESİ. Eski kod Math.min(idxRaw, cands.length-1) ile bir global
+         indeksi alt küme içinde konumlandırıyordu: iki farklı indeks uzayı.
+         Sonuç: bayat bir yer imi (örn. SIBNET i=8, liste 3 elemanlı) sessizce
+         BAŞKA bir videoyu açıyordu. Artık yalnızca indeks GERÇEKTEN bu oyuncunun
+         listesinde varsa ikame ediyoruz; yoksa null bırakıp en iyi kaynağa
+         düşüyoruz — yanlış video değil, çalışan bir video. */
       const cands = kay.filter(x=> x.l.player===pName);
-      if (cands.length) cur = cands[Math.min(Math.max(0, idxRaw), cands.length-1)];
+      if (cands.length && idxRaw < cands.length) cur = cands[Math.max(0, idxRaw)];
     }
   }
   if (!cur) cur = enIyiKaynak(kay);
@@ -1532,11 +1903,27 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
   const isHttpUrl = cur.l.tip==='url' && /^https?:\/\//i.test(rawUrl);
   const emb = embedUrl(cur.l.url, cur.l.tip);
   const src = srcLink(cur.l.url, cur.l.tip);
+  /* embedUrl() null döndüyse iki farklı durum olabilir: (a) tip != url,
+     (b) host iframe'e konulamayan listede. (b) için özel mesaj veriyoruz.
+     B15 düzeltmesi: ilk `try` bloğu ÖLÜYDÜ — http(s) olmayan bir URL'de
+     embedUrl() BAD_SCHEME değilse ham dizeyi döndürür (truthy), yani
+     `hostGomulemez` hesaplanıp hemen atılıyordu; yalnızca engelli şemada
+     ("javascript:") ulaşıyordu ve orada "bu site oynatıcıya izin vermiyor"
+     mesajı yanlıştı. Artık tek ve doğru koşul: gerçekten gömülemez listede mi? */
+  const hostGomulemez = (cur.l.tip==='url' && emb===null && /^https?:\/\//i.test(cur.l.url||'') && !kaynakGomulebilir(cur.l));
   const iframeHtml = emb
-    ? `<div class="player-box"><iframe id="frm" src="${esc(emb)}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen; encrypted-media; picture-in-picture"></iframe></div>`
+    ? `<div class="player-box"><iframe id="frm" src="${esc(emb)}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; playsinline; web-share"></iframe></div>`
+    : hostGomulemez
+    ? `<div class="player-box gomulemez"><div class="big">${ic('ban')}</div>
+        <b>${esc(cur.l.player)}</b> bu sitede oynatıcıya izin vermiyor.
+        <div class="sub">Video <b>silinmedi</b> — barındığı sitede açılıp izlenebilir.
+        ${src?`Aşağıdaki <b>kaynak linkini</b> kullan:`:''}</div>
+        ${src?`<a class="btn" href="${esc(src)}" target="_blank" rel="noopener noreferrer">${ic('ar')} Kaynak linkini aç</a>`:''}
+        <div class="sub">${ic('link')} Başka bir kaynak varsa üstteki KAYNAK çiplerinden seçebilirsin.</div>
+      </div>`
     : `<div class="note">Bu seçenek <b>${esc(cur.l.tip)}</b> tipinde; doğrudan gömülemiyor. Kaynak linkinden siteye gidip izleyebilirsin.</div>`;
   /* fansub çipleri → KAYNAK çiplerini süzer */
-  const fansubRow = fCount.size>1 ? `<div class="chiprow"><span class="lbl">Fansub</span>` +
+  const fansubRow = (fCount.size>1 || plySelFansubs.size) ? `<div class="chiprow"><span class="lbl">Fansub</span>` +
     [...fCount.entries()].sort((a,b)=> String(a[0]).localeCompare(String(b[0]),'tr')).map(([n,c])=>
       `<button class="fchip${plySelFansubs.has(n)?' on':''}" data-fs="${esc(n)}" type="button" title="KAYNAK listesini bu fansuba süzer">${esc(n)} <b>${c}</b></button>`).join('') +
     (plySelFansubs.size?`<button class="fchip temizle" data-fstemizle="1" type="button">✕ temizle</button>`:'') + `</div>` : '';
@@ -1662,20 +2049,88 @@ function pagerHTML(page, total, perPage){
 const EP_PAGE = 100;
 let epPage = 1;
 
-function bolumIdFor(ep){ return ep.no!=null ? String(ep.no) : encodeURIComponent(ep.slug); }
+/* Cakisan `no` tespiti: bazi dosyalarda (orn. pokemon.js) ayni `no` birden cok
+   bolumde geciyor; OVA/Special/ek sezon 1'den yeniden numaralandigi icin olusuyor.
+   Bu durumda sayisal id cakisir ve findEp() DAIMA ilk eslesmeyi dondurur ->
+   ikinci bolum hicbir baglantidan acilamaz.
+   Cozum: belirsiz `no` icin slug kullanilir. findEp'in slug dali ZATEN
+   production'da kullaniliyor (1.927 bolum `no:null` -> slug) -> yeni kod yolu
+   degil, mevcut yolu genisletme.
+   Onbellek: WeakMap, `data` dizisinin KENDISIYLE anahtarli. loadAnime ayni slug
+   icin ayni dizi referansini dondurur (:611) ve dizi yalnizca yukleme
+   basarisizliginde silinir (:633) -> onbellek bayatlamaz, sizdirma riski yok. */
+const _ambCache = new WeakMap();
+function ambNo(data){
+  let s = _ambCache.get(data);
+  if (!s){
+    const c = new Map();
+    for (const e of data) if (e.no!=null){ const k=String(e.no); c.set(k,(c.get(k)||0)+1); }
+    s = new Set([...c].filter(([,n])=>n>1).map(([k])=>k));
+    _ambCache.set(data, s);
+  }
+  return s;
+}
+/* `data` verilmezse eski davranis korunur -> kacirilmis bir cagri yeri hata
+   firlatmaz, mevcut davranisa duser. */
+function bolumIdFor(ep, data){
+  return (ep.no!=null && !(data && ambNo(data).has(String(ep.no))))
+    ? String(ep.no) : encodeURIComponent(ep.slug);
+}
 
-function epRow(slug, ep){
+/* ===== SEZON TESPITI =====
+   Sorun: bazi dosyalarda birden fazla sezon TEK listede; 1. sezonun bolumleri
+   "1. Bolum" derken 6. sezonun bolumleri "6. Sezon 1. Bolum" diyor ve araya
+   karisiyor (bkz. b\pokemon.js: 275 isaretsiz + 41 "5./6. Sezon").
+   KURAL: sayi Once gelir. "N. Sezon" (TR) ve "Nth Season" (EN) guvenilir.
+   "Final Season N" ise dizinin ADIDIR (Beastars), sezon isareti DEGIL -> lookbehind
+   ile eleniyor. "Season N" yalnizca Final Season degilse.
+   Isaretsiz bolum = 1. sezon.
+   DOSYA ADI zaten sezon belirtiyorsa sekme gosterilmez (bkz. asagidaki not). */
+const SEZON_RE = /(?<!Final )\b(\d{1,2})\s*\.\s*Sezon\b|\b(\d{1,2})\s*(?:st|nd|rd|th)\s+Season\b|(?<!Final )\bSeason\s+(\d{1,2})\b/;
+const DOSYA_SEZON_RE = /-\d+(?:st|nd|rd|th)-season\b|season-\d|-\d+-sezon\b|-sezon-\d/;
+let epSezon = 1;
+function sezonNo(ep){
+  const m = SEZON_RE.exec(ep.ad || '');
+  if (!m) return 1;
+  return parseInt(m[1] || m[2] || m[3], 10) || 1;
+}
+/* null donerse o dosyada sekme gosterilmez. */
+function sezonListesi(slug, data){
+  if (!data || !data.length) return null;
+  /* Dosya adi tek bir sezon diyorsa (kimi-ni-todoke-2nd-season gibi) tum dosya
+     o sezondur; isaretsiz yazilan bolumler de ayni sezonun devamidir -> yanlis
+     etiket vermemek icin sekme gosterilmez. */
+  if (DOSYA_SEZON_RE.test(slug)) return null;
+  let isaretli = 0;
+  for (const e of data) if (SEZON_RE.test(e.ad || '')) isaretli++;
+  if (isaretli===0 || isaretli===data.length) return null;  // hepsi ayni sezon
+  const s = new Set(data.map(sezonNo));
+  return s.size>1 ? [...s].sort((a,b)=>a-b) : null;
+}
+
+function epRow(slug, ep, data){
   const ids = kaldirilanFiltre(ep.links);   // M2: kaldırılanlar sayılmaz
-  const ekl = eklenenLinkler(slug, ep);     // yönetici eklemeleri
+  const ekl = eklenenLinkler(slug, ep, data);   // yönetici eklemeleri
   const players = [...new Set(ids.map(l=>l.player).filter(p=> p && p!=='?'))].slice(0,4);
   const kaynaksiz = !ids.length || !players.length;   // link ya da tanınan kaynak yoksa
   const eklHtml = ekl.length?`<span title="yönetici eklemesi" style="color:var(--ok);font-weight:700">+${ekl.length} yeni</span>`:'';
-  return `<div class="ep" data-b="${esc(bolumIdFor(ep))}">
-    <span class="no">${ep.no!=null? '#'+ep.no : '★'}</span>
+  /* M10 düzeltmesi: `links` boş ama `fansubs` kaydı olan bölümler vardir
+     (ölçüm: 1.627 bölümde links:[] , bunların 7.194'ünde fansubs[] dolu —
+     detective-conan-tv 1-3: links:[] + fansubs:[{ad:"ElzSubs",…}]).
+     Bunlara "Kaynak yok" demek YANLIŞTI: kaynak yok değil, fansub kaydı var
+     ama oynatılabilir link getirilmemiş. Kullanıcı listenin en çok baktığı
+     yerde bunu göremezdi (fansubBilgiHtml yalnız "Tüm seçenekler" ve
+     oyuncu sayfasında çağrılıyordu). */
+  const fs = Array.isArray(ep.fansubs) ? ep.fansubs.filter(f=>f && f.ad) : [];
+  const fsHtml = fs.length
+    ? `<span class="pchip" style="border:none;padding:0" title="${esc(fs.map(f=>f.ad).join(' · '))}">${esc(fs.slice(0,3).map(f=>f.ad).join(' · '))}${fs.length>3?' +'+(fs.length-3):''}</span>`
+    : '';
+  return `<div class="ep" data-b="${esc(bolumIdFor(ep, data))}">
+    <span class="no">${ep.no!=null? '#'+esc(ep.no) : '★'}</span>
     <span class="ea">${esc(ep.ad)}</span>
     <span class="meta">
       ${kaynaksiz
-        ? `<span class="kyok">Kaynak yok</span>${eklHtml}`
+        ? `<span class="kyok"${fs.length?' title="bağlantı getirilmemiş, yalnızca fansub kaydı var"':''}>Kaynak yok</span>${fsHtml}${eklHtml}`
         : `<span>${ids.length} link</span>${eklHtml}
       <span class="pchip" style="border:none;padding:0">${esc(players.join(' · '))}</span>`}
     </span>
@@ -1713,9 +2168,15 @@ function optionsFor(ep){
 function chipRowHtml(lbl, counts, sel, dim){
   const items = [...counts.entries()]
     .sort((a,b)=> b[1]-a[1] || String(a[0]).localeCompare(String(b[0]),'tr'));
-  if (!items.length) return '';
+  /* B6 düzeltmesi: `if (!items.length) return ''` "✕ temizle" düğmesini de
+     atıyordu. Bir player/fansub'un TÜM linkleri kaldırıldığında çip satırı
+     yok oluyor, ama seçim hâlâ duruyordu -> kullanıcı filtreyi temizleyemiyor,
+     boş liste karşısında çıkışsız kalıyordu. Seçim varsa satır her zaman
+     çizilir (en azından temizle düğmesi). */
+  if (!items.length && !sel.size) return '';
   return `<div class="chiprow"><span class="lbl">${lbl}</span>` +
-    items.map(([n,c])=>`<button class="fchip ${sel.has(n)?'on':''}" data-dim="${dim}" data-val="${esc(n)}">${esc(n)} <b>${c}</b></button>`).join('') +
+    items.map(([n,c])=>`<button class="fchip ${sel.has(n)?' on':''}" data-dim="${dim}" data-val="${esc(n)}">${esc(n)} <b>${c}</b></button>`).join('') +
+    (sel.size && !items.length ? `<span style="color:var(--tx3);font-size:12px">seçili: ${[...sel].map(esc).join(', ')}</span>` : '') +
     (sel.size?`<button class="fchip temizle" data-temizle="${dim}">✕ temizle</button>`:'') +
     `</div>`;
 }
@@ -1733,7 +2194,7 @@ function optRowHtml(x, num){
       ${isUrl?`<button class="mini" data-act="dl-mp4" data-url="${esc(u)}" title="${esc(mp4cmd)}">yt-dlp</button>
       <button class="mini" data-act="dl-g" data-url="${esc(u)}" title="m3u8/akış: yt-dlp -g (doğrudan akış linkini verir)">m3u8</button>
       ${SERVER_OK?`<button class="mini" data-act="resolve" data-url="${esc(u)}" title="yardımcı sunucu ile akışı çöz">çöz</button>`:''}`:''}
-      ${ADMIN?`<button class="mini x" data-act="kaldir" data-url="${esc(u)}" title="linki kaldır (yerel; dışa aktarıp repoya ekle)">×</button>`:''}
+      ${ADMIN?`<button class="mini x" data-act="kaldir" data-url="${esc(u)}" title="bağlantıyı kaldır (yerel; TÜM bölümlerde gizlenir, dışa aktarıp repoya ekle)">×</button>`:''}
     </span>
   </div>`;
 }
@@ -1748,17 +2209,26 @@ async function copyText(txt){
     if (ok) return true;
   }catch(e){}
   try{
+    /* DÜZELTME: execCommand('copy') false DÖNEBİLİR (odak yok, geçici
+       kullanıcı etkileşimi yok, sandbox). Dönüş değeri atılınca fonksiyon
+       yine true dönüyor ve kullanıcıya "kopyalandı ✓" deniyordu — pano hiç
+       yazılmamışken. Artık gerçek sonucu döndürüyoruz.
+       iOS: readonly niteliği seçim güvenilirliğini artırır. */
     const ta = document.createElement('textarea');
-    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    document.execCommand('copy');
-    ta.remove(); return true;
+    ta.value = txt;
+    ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, txt.length);
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return !!ok;
   }catch(e){ return false; }
 }
 function bindCopy(){
   document.querySelectorAll('.copybtn').forEach(b=>{
     if (b.dataset.act) return;   // "çöz" gibi özel butonlar ayrı bağlanır
-    b.onclick = ()=> copyText(b.dataset.cmd).then(()=> flashDone(b,'kopyalandı ✓'));
+    b.onclick = ()=> copyText(b.dataset.cmd).then(ok=> flashDone(b, ok?'kopyalandı ✓':'pano yazılamadı', ok?1400:2600));
   });
 }
 
@@ -1783,6 +2253,13 @@ function route(){
   document.title = 'TürkAnime Arşiv — İzle';
   navAktif();
   if (!h || h==='#' || h==='#/' || h.startsWith('#/ara')){
+    /* hash TAM OLARAK ana sayfa (#/ veya boş) ise liste durumu temizlenir:
+       logo, doğrudan adres ve tarayıcı geri tuşu gerçekten ana sayfayı açar.
+       #/ara ise hem iniş hem arama sonuçları için kullanılır; orada korunur. */
+    if ((!h || h==='#' || h==='#/') && (lastQuery || listFiltre || anQ)){
+      lastQuery = ''; lastPage = 1; listFiltre = null; listPage = 1; anQ = ''; anPage = 1;
+      const _q = $('#q'); if (_q) _q.value = '';
+    }
     renderHome();
     if (lastQuery) $('#q').value = lastQuery;
     return;
@@ -1803,7 +2280,7 @@ function route(){
     if (bolumId && player==='liste') renderOptions(slug, data, bolumId);       // yönetim/seçenek listesi
     else if (bolumId && player) renderPlayer(slug, data, bolumId, player, idx);
     else if (bolumId) renderPlayer(slug, data, bolumId, null, null);           // bölüm → doğrudan player
-    else { epPage = 1; renderAnime(slug, data); }
+    else { epPage = 1; epSezon = 1; renderAnime(slug, data); }
   }).catch(err=>{
     if (tok!==routeToken) return;
     appEl().innerHTML = `<div class="errbox"><b>${esc(slug)}</b> için veri bulunamadı: ${esc(err.message)}<br>b/${esc(slug)}.js dosyası siteyle aynı klasörde olmalı.<br><a href="#/ara">Aramaya dön</a></div>`;
@@ -1827,6 +2304,12 @@ document.addEventListener('keydown', e=>{
 
 /* ============ boot ============ */
 if (ADMIN){ const b = document.getElementById('admBadge'); if (b) b.hidden = false; }
+/* "Ana sayfa" bağlantıları (logo, üst menü, mobil alt menü) gerçekten durumu
+   sıfırlamalı. Yalnızca href="#/" yetmiyordu: hash zaten #/ ise hashchange
+   olmuyor, ayrıca arama/filtre durumu modülde kalıyordu. */
+document.querySelectorAll('a.logo, a[data-nav="ana"], a[data-nav="ana-mobil"], .bnav a[href="#/"]').forEach(a=>{
+  a.addEventListener('click', anaSayfayaDon);
+});
 window.addEventListener('hashchange', route);
 route();
 pingServer();  // M7b: yardımcı sunucu varsa "çöz" butonları görünür olur
