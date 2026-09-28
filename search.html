@@ -15,6 +15,65 @@
   gtag('config', 'G-TB3R2BMC9E');
 </script>
 <title>TürkAnime Arşiv — İzle</title>
+<!-- ============================================================
+     📊 OYNATICI TELEMETRİSİ (MOBIL-QOL-PLANI.md §12.6, 28.09.2026)
+     ------------------------------------------------------------
+     NEDEN: "%55 çıkma oranının sebebi oynatıcı başarısızlığı mı?"
+     sorusu 3 turluk denetimden sonra da CEVAPLANAMIYORDU, çünkü
+     kodda oynatıcı için HİÇBİR olay yayılmıyordu. Payda (kaç oynatıcı
+     sayfası açıldı) bilinmeden hiçbir oran hesaplanamaz.
+
+     ⭐ YALNIZCA DOĞRUDAN GÖZLEMLENEBİLİR OLAYLAR gönderilir:
+        - player_view          : oynatıcı sayfası açıldı          (PAYDA)
+        - player_blocked       : kaynak bu sitede GÖMÜLEMEZ         (dolaylı hata)
+        - player_source_switch : kullanıcı başka kaynağa geçti    (şüphe)
+        - player_manuel_link   : "kaynak linkini aç"a tıkladı      (EN GÜÇLÜ hata)
+
+     ⛔ BİLEREK GÖNDERİLMEYENLER ve sebebi:
+        - "iframe yüklenmedi"  : çapraz-kökenli iframe'in load olayı
+          güvenilir biçimde OKUNAMAZ; timeout ile tahmin etmek yanlış
+          hata üretir (reklam yüklenen oynatıcılar da geç yüklenir).
+          Ölçülen bir şeyi varmış gibi göndermektense hiç göndermiyoruz.
+        - oynatıcı URL'si     : üçüncü taraf; gönderilirse GA4'te
+          kişisel veri tartışması çıkar. Yalnız HOST (alan adı) gider.
+
+     `gtag.js` reklam engelleyicide KESİLİRSE: `dataLayer` yine de tanımlı
+     (satır 12), çağrı güvenle yutulur. Bu yüzden sarmalama gerekli değil.
+     ============================================================ -->
+<script>
+  /* Ölçüm kapısı: tek oturumda aynı olayı sayma (kullanıcı 10 bölüm
+     açıp kapatınca 10 kayıt üretmesin). Basit sayaç — GA4'nin
+     sessionStorage'ı da var ama o yazılabilir değil. */
+  window.__olcum = window.__olcum || {};
+  function olcum(olay, p){
+    try{
+      const t = Date.now();
+      p = p || {};
+      /* ⭐ DENETİM DÜZELTMESİ (28.09.2026):
+         (a) Anahtar yalnız olay adıydı → 30 sn içinde ikinci bir anime
+             `player_blocked` gönderirse SAYILMAZDI. Anahtara anime ve
+             oynatıcı katıldı.
+         (b) `player_source_switch` tam olarak "ilk video çalışmadı,
+             başkasını deniyorum" sinyali. Kullanıcı 3-4 kaynağı 10 sn
+             içinde denerse 1'i sayılıyordu — yani SİNYALİN TAMAMINI
+             kaybediyorduk. Artık bu olay hiç tekilleştirilmiyor: her
+             tıklama gerçek bir eylem.
+         (c) `player_view` zaten tekilleştirmeden geçiyordu; yorum
+             bunun "bilerek" olduğunu söylüyordu, kod da öyleydi. */
+      if (olay !== 'player_view' && olay !== 'player_source_switch'){
+        const k = olay+'|'+(p.anime||'')+'|'+(p.oynatici||'');
+        const son = window.__olcum[k] || 0;
+        if (t - son < 30000) return;      // aynı anime+oynatıcı 30 sn'de bir
+        window.__olcum[k] = t;
+      }
+      if (typeof gtag === 'function') gtag('event', olay, p);
+    }catch(e){ /* ölçüm asla siteyi bozamaz */ }
+  }
+  function hostAdedi(u){
+    try{ return new URL(String(u||'').split('?')[0]).hostname.replace(/^www\./,''); }
+    catch(e){ return 'bilinmiyor'; }
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;500;700&display=swap">
@@ -29,10 +88,29 @@
   --ff:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
   --btn-h:40px;--btn-h-sm:32px;--chip-h:32px;
+  /* 📱 MOBİL QOL (28.09.2026, MOBIL-QOL-PLANI.md §4)
+     Apple HIG 44x44, Android 48x48 önerir. v1'de çipler 32px, mini
+     düğmeler 30px, A-Z 36px, sayfalayıcı 38px idi — yani sitede EN ÇOK
+     tıklanan kontroller (sezon filtresi + kaynak seçimi çip) EN KÜÇÜK
+     olanlardı. Ölçüm: mobil oturum 24 sn, masaüstü 1 dk 4 sn (2,7x kısa). */
+  --tap:44px;--tap-sm:40px;
+  /* ⭐ `--hdr-h` = üst çubuğun YÜKSEKLİĞİ. Sabit sayı DEĞİL:
+     `hdrOlc()` (aşağıda) çalışma anında ölçüp yazar.
+     ÖLÇÜM (28.09.2026, 954px masaüstü): gerçek yükseklik **73px**,
+     dosyadaki sabit 76px **3px yanlıştı** -> bölüm listesi başlığı
+     header'ın altında kalıyordu. Sabit sayıyı doğru tahmin etmek
+     (mobilde logo 40px, masaüstünde 52px) ölçümden iyi değil;
+     bu yüzden JS ölçüyor. Değer boşsa 73px'e düşer. */
+  --hdr-h:73px;
   --container:1180px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-padding-top:76px}
+/* ⭐ Yapışkan kaydırma ofseti artık SABİT SAYI DEĞİL, header yüksekliğinden
+   türetiliyor + çentik güvenlik alanı. v1'de 76px iki yerde sabit yazılıydı
+   (`:35` scroll-padding, `:282` sticky top) ve safe-area-inset-top'u
+   hesaba katmıyordu -> çentikli cihazda bölüm listesi başlığı header'ın
+   altında kayabiliyordu. */
+html{scroll-padding-top:calc(var(--hdr-h) + env(safe-area-inset-top,0px))}
 html,body{background:var(--bg);color:var(--tx);font:15px/1.55 var(--ff);-webkit-text-size-adjust:100%}
 a{color:var(--ac2);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -83,6 +161,9 @@ main{padding:var(--sp-5) 0 60px}
 h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:var(--sp-2)}
 
 /* ===== buton / çip sistemi ===== */
+/* 📱 DOKUNMA HEDEFLERİ: kuralları stilin SONUNDA, tek `@media (pointer:coarse)`
+   bloğunda. Buraya koyulursa temel kurallar onları ezer (bkz. dosya sonundaki
+   açıklama). Değişkenler `--tap` / `--tap-sm` ile tanımlı. */
 .btn{display:inline-flex;align-items:center;gap:7px;height:var(--btn-h);padding:0 var(--sp-4);border-radius:var(--rad-pill);background:var(--ac);color:var(--ac-ink);font-size:13.5px;font-weight:700;transition:filter .12s;cursor:pointer}
 .btn:hover{filter:brightness(1.12);text-decoration:none}
 .btn.ghost{background:var(--card2);color:var(--tx2);border:1px solid var(--line);font-weight:600}
@@ -90,11 +171,14 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 .btn.done{background:var(--ok);color:#0e2b1c}
 .btn.sm{height:var(--btn-h-sm);padding:0 var(--sp-3);font-size:12.5px}
 .btn.off{opacity:.35;pointer-events:none}
+/* 📱 mini: 30px -> 40px (pointer:coarse). "yt-dlp"/"m3u8"/"çöz"/"kopyala" butonları
+   bunlar; kaynak satırının EN SIK kullanılan eylemleri. */
 .mini{flex:none;height:30px;padding:0 var(--sp-3);font-size:11.5px;border:1px solid var(--line);background:var(--card2);color:var(--tx2);border-radius:8px;display:inline-flex;align-items:center;gap:5px;transition:all .12s}
 .mini:hover{color:var(--ac2);border-color:var(--ac2)}
 .mini.x:hover{color:var(--bad);border-color:var(--bad)}
 .mini.done{color:var(--ok);border-color:var(--ok)}
 .mini[disabled]{opacity:.5;cursor:wait}
+/* 📱 copybtn: 30px -> 40px. Kaynak URL'sini panoya kopyalama. */
 .copybtn{height:30px;padding:0 var(--sp-3);background:var(--card2);border:1px solid var(--line);color:var(--tx2);border-radius:8px;font-size:12px;font-family:ui-monospace,Consolas,monospace;transition:all .12s;display:inline-flex;align-items:center;cursor:pointer}
 .copybtn:hover{color:var(--ac2);border-color:var(--ac2)}
 .copybtn.done{color:var(--ok);border-color:var(--ok)}
@@ -248,10 +332,14 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 
 /* ===== oynatıcı ===== */
 .player-box{position:relative;background:#000;border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;display:flex;justify-content:center}
-.player-box iframe{display:block;width:100%;aspect-ratio:16/9;max-width:min(100%,calc(78vh * 16 / 9));border:0;background:#000}
+/* 📱 dvh: 100vh mobilde ADRES ÇUBUĞU yüksekliğini içerir (Chrome/Safari/WebView).
+   Bu yüzden oynatıcı kutusu taşıyor/kırpılıyordu. dvh = dinamik görünür yükseklik
+   (çubuk açılınca küçülür). Ölçüm: MOBIL-QOL-PLANI.md §5 — 4 ham vh vardı,
+   hepsi dvh'ye çevrildi, her birine vh geri dönüşü eklendi (eski tarayıcı). */
+.player-box iframe{display:block;width:100%;aspect-ratio:16/9;max-width:min(100%,calc(78vh * 16 / 9));max-width:min(100%,calc(78dvh * 16 / 9));border:0;background:#000}
 /* iframe'e konulamayan kaynak (bkz. GOMULEMEZ_HOST) — sessiz bos kutu yerine durust mesaj */
 .player-box.gomulemez{flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-2);
-  background:var(--bg2);padding:calc(var(--sp-6)) var(--sp-4);text-align:center;aspect-ratio:auto;min-height:38vh}
+  background:var(--bg2);padding:calc(var(--sp-6)) var(--sp-4);text-align:center;aspect-ratio:auto;min-height:38vh;min-height:38dvh}
 .player-box.gomulemez .big{font-size:30px;line-height:1;color:var(--warn)}
 .player-box.gomulemez .big svg{width:30px;height:30px}
 .player-box.gomulemez .sub{color:var(--tx3);font-size:13px;max-width:52ch;line-height:1.6}
@@ -279,7 +367,10 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 .epnav .btn{flex:none}
 .epnav .spacer{flex:1}
 .epnav .cnt{flex:none;font-size:12.5px;color:var(--tx3);white-space:nowrap}
-.eplist-side{grid-area:side;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;position:sticky;top:76px;display:flex;flex-direction:column;max-height:calc(100vh - 92px)}
+/* ⭐ top:76px SABİT SAYI YERİNE var(--hdr-h) + safe-area. Çentikli cihazda
+   (iPhone çentik, Android Punch-hole) header safe-area yüzünden 76px'ten
+   UZUN olur; 76px sabit kalınca bölüm listesi başlığı header'ın altına girer. */
+.eplist-side{grid-area:side;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:var(--rad);overflow:hidden;position:sticky;top:calc(var(--hdr-h) + env(safe-area-inset-top,0px));display:flex;flex-direction:column;max-height:calc(100vh - var(--hdr-h) - 16px);max-height:calc(100dvh - var(--hdr-h) - 16px)}
 .els-head{flex:none;display:flex;align-items:center;gap:var(--sp-2);padding:10px var(--sp-3);border-bottom:1px solid var(--line);font:700 12.5px var(--fd);letter-spacing:.3px;text-transform:uppercase;color:var(--tx2);background:var(--card2)}
 .els-head svg{width:14px;height:14px;color:var(--ac)}
 .els-head b{margin-left:auto;font-weight:700;color:var(--tx3);font-size:11.5px;text-transform:none}
@@ -299,6 +390,18 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 .els-item.on .n{color:var(--ac)}
 .els-item[hidden]{display:none}
 .els-empty{padding:18px var(--sp-3);color:var(--tx3);font-size:12.5px;text-align:center}
+/* 📱 SAYFA DÜĞMELERİ (oynatıcı kenar listesi, MOBIL-QOL-PLANI.md §3).
+   One Piece 1.166 bölüm → 6 sayfa. v1'de hepsi basılıyordu. */
+.els-pager{flex:none;display:flex;flex-wrap:wrap;gap:5px;padding:8px var(--sp-3);border-top:1px solid var(--line);background:var(--card)}
+.els-pager button{min-width:32px;height:32px;padding:0 6px;border:1px solid var(--line);background:var(--card2);color:var(--tx2);border-radius:8px;font-size:12.5px;font-weight:700;display:grid;place-items:center;transition:all .12s}
+.els-pager button:hover{border-color:var(--ac2);color:var(--ac2)}
+.els-pager button.on{background:var(--ac);border-color:var(--ac);color:var(--ac-ink)}
+.els-pager .gap{align-self:center;color:var(--tx3);font-size:12px;padding:0 2px;user-select:none}
+/* sayfa-bağı filtre sayacı: "Bu sayfada 3 eşleşme · toplam 1166 bölüm, 6 sayfa" */
+.els-sayfa-yazi{flex:none;padding:7px var(--sp-3);color:var(--tx3);font-size:11.5px;line-height:1.45;border-top:1px solid var(--line);background:var(--bg2)}
+.els-sayfa-yazi[hidden]{display:none}
+.els-sayfa-yazi b{color:var(--tx2)}
+@media (pointer:coarse){ .els-pager button{min-width:var(--tap-sm);height:var(--tap-sm)} }
 
 /* ===== bağlantılı seriler ===== */
 .rel-card{position:relative}
@@ -354,8 +457,65 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
 }
 @media (max-width:900px){
   .watch{grid-template-columns:1fr;grid-template-areas:"top" "side" "bot"}
-  .eplist-side{position:static;max-height:none;margin:var(--sp-3) 0}
-  .els-body{max-height:44vh}
+  .eplist-side{position:static;max-height:none;margin:var(--sp-3) 0;top:auto}
+  /* 📱 dvh — mobilde 100vh adres çubuğunu içerdiği için bölüm listesi
+     kaydırılırken alt kısım çubuğun altında kalıyordu. */
+  .els-body{max-height:44vh;max-height:44dvh}
+}
+
+/* ============================================================
+   📱 PREFERS-REDUCED-MOTION
+   Sistem ayarı "animasyonları azalt" olan kullanıcılar için.
+   v1'de 0 eşleşme vardı: sonsuz dönen .spinner + ~10 geçiş korumasızdı.
+   Ölçüm: MOBIL-QOL-PLANI.md §7
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  /* ⭐ .spinner sonsuz dönerdi; reduced-motion'da duruk ikon olur.
+     Dönme yerine sabit bir halka gösteriyoruz — "yükleniyor" anlamı korunur. */
+  .spinner{animation:none;border-top-color:var(--ac2);border-right-color:var(--ac2)}
+}
+/* ⭐ `scroll-behavior`. NOT: reduced-motion bunu `!important` ile kapatıyor
+   (yukarıdaki `*,*::before,*::after` kuralı), kaynak sırası değil. Buradaki
+   gerekçe düzeltildi: reduced-motion bloğu ÖNDE geldiği halde `!important`
+   sayesinde kazanıyor; `smooth` sonra gelse de yenilmiyor. */
+html{scroll-behavior:smooth}
+
+/* ============================================================
+   📱 DOKUNMA HEDEFLERİ — TEK BLOK, DOSYANIN SONU
+   ------------------------------------------------------------
+   ⭐ KRİTİK KONUMLAMA HATASI (28.09.2026, bağımsız denetimle bulundu).
+   Bu blok ilk yazıldığında buton/çip sisteminin hemen ALTINDAYDı
+   (L~179). Aynı özgüllükteki temel kurallar `.az button`(L283),
+   `.pager button`(L303), `.sortlab select`(L289),
+   `.toolbar .searchbox`(L287), `.azgrid`(L291) SONRA geliyordu.
+   CSS'te `@media` özgüllük EKLEMEZ → aynı seçici metni + sonra gelen
+   kazanır → coarse bloğundaki 6 kuralın 5'i **ÖLÜYDÜ**; tarayıcı 36px /
+   38px / 62px değerlerini kullanıyordu, yani dokunma hedefleri hiç
+   büyümemişti. Kurulumun kendi yorumu "44px'e çıktık" diyordu.
+   DÜZELTME: tüm coarse kuralları stilin EN SONUNA, tek yerde toplandı.
+   Bu yüzden `.els-pager` kuralı (o ayrı eklenmişti) çalışıyordu:
+   o, temel kuralından sonra geliyordu. Fark, gözden kaçmayı gösteriyordu.
+   ============================================================ */
+@media (pointer:coarse){
+  :root{--btn-h:var(--tap);--btn-h-sm:var(--tap-sm);--chip-h:var(--tap)}
+  .mini,.copybtn{height:var(--tap-sm);font-size:12px;padding:0 var(--sp-3)}
+  /* kenar liste satırı: 9px+13px*1.55 ≈ 38px -> 44px min.
+     min-height: metin tek satır, taşma olmaz. */
+  .els-item{min-height:var(--tap)}
+  .az button{width:var(--tap);height:var(--tap)}
+  .pager button{min-width:var(--tap);height:var(--tap)}
+  .els-pager button{min-width:var(--tap-sm);height:var(--tap-sm)}
+  .azgrid{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+  .jump input,.jump button{height:var(--tap-sm)}
+  .sortlab select{height:var(--tap-sm)}
+  .toolbar .searchbox{height:var(--tap-sm)}
+  .azcard{padding:12px 0 10px}
 }
 </style>
 </head>
@@ -400,7 +560,23 @@ h1.anime-title{font:800 26px/1.25 var(--fd);letter-spacing:-.4px;margin-bottom:v
      HİÇBİR uyarı çıkmıyordu. Artık hem konsola hem arayüze düşüyor. -->
 <script>window.KALDIRILAN = window.KALDIRILAN || [];</script>
 <script src="kaldirilan.js" onerror="window.KALDIRILAN_YOK=1;console.warn('[turkanime] kaldirilan.js yuklenemedi - kaldirilan linkler UYGULANMIYOR')"></script>
-<script src="anilist.js" onerror="console.warn('[turkanime] anilist.js yuklenemedi - AniList zenginlestirmesi kapali')"></script>
+<!-- 📱 anilist.js ARTIK DEFER (28.09.2026, MOBIL-QOL-PLANI.md §1)
+
+     ÖLÇÜM: bu dosya 2.677 BAYT. v1'de `defer`/`async` YOKTU -> ilk boyamayı
+     TAMAMEN blokluyordu (t=23ms'te başlıyor, t=278ms'te bitiyor; DOMContentLoaded
+     376ms). Sitenin %65,9'u mobil, %30'u gömülü webview (iOS %22,1 · Android
+     Webview %17,3). Mobil veride her ziyarette 2,7 MB indiriliyordu.
+
+     `defer` YALNIZCA yetmez: veri geç gelirse kapak/özet hiç görünmez.
+     Bu yüzden aşağıda `window.addEventListener('anilist', ...)` kancası var;
+     veri gelince ekran yeniden çizilir. Site "hızlı ama eksik" yerine
+     "hızlı ve tam" veriyor.
+
+     `async` DEĞİL `defer` seçildi: async yükleme sırasını garanti etmez,
+     anilist.js oynatıcının görselleriyle yarışabilirdi. -->
+<script src="anilist.js" defer
+        onload="window.dispatchEvent(new Event('anilist'))"
+        onerror="console.warn('[turkanime] anilist.js yuklenemedi - AniList zenginlestirmesi kapali')"></script>
 <script>
 /* ---- yönetici eklemeleri: eklenen.js (turkanime_yonet.py üretir) ----
    KALDIRILAN gibi çalışma anında uygulanan override verisidir; b/ dosyalarını
@@ -763,12 +939,81 @@ function buildIndirScripts(slug, data, tumu){
   b.push('','pause');
   return { bat: b.join('\r\n')+'\r\n', sh: s.join('\n')+'\n' };
 }
+/* 📱 indirFile — hata yolu eklendi (MOBIL-QOL-PLANI.md §6)
+
+   ESKİ HÂLİ: `createObjectURL` + `a.click()`, try/catch YOK, dönüş YOK.
+   Çağıranlar HER ZAMAN başarı diyordu ("indirildi ✓"). Android WebView'da
+   (trafiğin %17,3'ü) blob indirme bloklandığında kullanıcıya
+   "başarılı" denir, hiçbir şey olmaz. Sessiz yalan.
+
+   YENİ:
+   - gerçek hata durumunda `false` döner
+   - `createObjectURL` yoksa (eski webview) veri-URI'ye düşer
+   - YEDEK YOL: pano kopyalama. `copyText()` zaten çalışan bir yedeğe
+     sahipti (:2201 `execCommand('copy')`); indirme aynı kalıbı kullanmıyordu.
+     Artık pano = ikinci şans, kullanıcı dosyayı elle yapıştırabilir.
+   - Çağıranlar dönüşü kontrol eder (aşağıda).          */
+/* ⭐ ÜÇ DURUMLU SONUÇ. `true|false` yetmiyordu: pano da başarısız
+   olduğunda `false` dönüyor ve çağıran "kopyalandı" diyordu —
+   kaldırılmak istenen sessiz yalan yeni yoldan geri geliyordu. */
+const INDIRILDI='indirildi', PANO='pano', INDIR_BASARISIZ='basarisiz';
 function indirFile(name, content, mime){
-  const blob = new Blob([content], {type: mime||'text/plain;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  const tip = mime||'text/plain;charset=utf-8';
+  try{
+    if (typeof Blob === 'undefined' || !window.URL || !URL.createObjectURL)
+      throw new Error('createObjectURL yok');
+    const blob = new Blob([content], {type: tip});
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url; a.download = name; a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} a.remove(); }, 1500);
+    return INDIRILDI;
+  }catch(e){
+    /* ⭐ Yedek yol 1: veri-URI (büyük dosyalarda tarayıcı sınırlayabilir) */
+    try{
+      const a = document.createElement('a');
+      /* ⚠ (a) `tip` zaten `;charset=utf-8` İÇERİYOR; bir daha eklenince
+         `charset=utf-8;charset=utf-8` oluşuyordu. (b) `encodeURIComponent`
+         ASCII dışını ~2-3× şişirir; tarayıcı sınırı aşınca THROW ETMEZ,
+         sessizce hiçbir şey yapmaz — ama kod başarı diyordu. Aynı "sessiz
+         yalan" sınıfı. Şimdi uzunluk ölçülüp panoya düşülüyor. */
+      const kodlanmis = encodeURIComponent(content);
+      if (kodlanmis.length > 1500000) return indirPanoYedek(content);
+      a.href = 'data:'+tip+','+kodlanmis;
+      a.download = name; a.rel='noopener'; a.style.display='none';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>a.remove(), 1500);
+      return INDIRILDI;
+    }catch(e2){
+      /* ⭐ Yedek yol 2: pano. Dosya içeriğini kullanıcı yapıştırabilir. */
+      return indirPanoYedek(content);
+    }
+  }
+}
+/* 📱 Son çare: içeriği panoya kopyala. copyText() async, bu yüzden
+   çağıran `Promise.resolve(...).then()` ile bekliyor.
+   DÖNÜŞ: 'pano' ya da 'basarisiz'. */
+function indirPanoYedek(content){
+  try{
+    const sonuc = copyText(content);
+    if (sonuc && typeof sonuc.then === 'function')
+      return sonuc.then(ok => ok ? PANO : INDIR_BASARISIZ);
+  }catch(e){}
+  return INDIR_BASARISIZ;
+}
+/* 📱 Sonucu dürüstçe metne çevir.
+   ⭐ DENETİM BULGUSU (28.09.2026): ilk sürüm `true|false` döndürüyordu
+   ve çağıran `false` görünce "panoya kopyalandı" diyordu. Ama pano da
+   BAŞARISIZ olduğunda `false` dönüyordu → pano yazılamadığında da
+   "kopyalandı" deniyordu. Kaldırmak istediğim sessiz yalan, YENİ yoldan
+   geri geliyordu. Üç mesaj ayrı ayrı. */
+function indirMesaj(sonuc){
+  if (sonuc === INDIRILDI) return {metin:'indirildi ✓',                   sure:1500};
+  if (sonuc === PANO)      return {metin:'indirilemedi → panoya kopyalandı', sure:2800};
+  return {metin:'indirilemedi, pano da yazılamadı',                        sure:3000};
 }
 
 /* ---- tek link indirme betiği (.bat/.sh) — M2: player'daki "Videoyu indir" butonu ----
@@ -798,9 +1043,15 @@ function linkIndirYap(btn, slug, ad, url, restore){
   const winMi = /windows/i.test(String(navigator.userAgent||''));   // Windows UA → .bat, diğerleri → .sh
   const icerik = linkIndirScript(slug, ad, url, winMi);
   if (!icerik){ flashDone(btn, 'indirilebilir url yok', 1600, restore); return; }
-  indirFile('indir-'+slug+'-'+fsSafe(ad)+(winMi?'.bat':'.sh'), icerik,
+  /* 📱 DÜNCE her zaman "başarılı" yazıyordu; indirFile sessizce
+     başarısız olsa bile. Artık dönüş kontrol ediliyor ve hangi yolun
+     çalıştığı dürüstçe söyleniyor (indirMesaj). */
+  const sonuc = indirFile('indir-'+slug+'-'+fsSafe(ad)+(winMi?'.bat':'.sh'), icerik,
             winMi ? 'text/plain;charset=utf-8' : 'text/x-shellscript;charset=utf-8');
-  flashDone(btn, 'betik indirildi ✓', 1500, restore);
+  Promise.resolve(sonuc).then(s=>{
+    const m = indirMesaj(s);
+    flashDone(btn, m.metin==='indirildi ✓' ? 'betik indirildi ✓' : m.metin, m.sure, restore);
+  }).catch(()=>{ flashDone(btn, 'indirilemedi', 2200, restore); });
 }
 
 /* ============ M7b: resolve API ============ */
@@ -916,16 +1167,16 @@ function initials(t){
   const w = String(t||'?').replace(/[^\p{L}\p{N} ]/gu,' ').trim().split(/\s+/);
   return ((w[0]||'?')[0]+((w[1]||'')[0]||'')).toUpperCase();
 }
-function poster(a){
+function poster(a, sizes){
   const h = hueOf(a.slug), t = a.baslik||a.slug;
-  return `<div class="poster" style="--h:${h};--g:${(h+35)%360}"><span class="pl">${esc(initials(t))}</span>${a.eps!=null?`<span class="pn">${a.eps} bölüm</span>`:''}${alPosterImg(a)}</div>`;
+  return `<div class="poster" style="--h:${h};--g:${(h+35)%360}"><span class="pl">${esc(initials(t))}</span>${a.eps!=null?`<span class="pn">${a.eps} bölüm</span>`:''}${alPosterImg(a, sizes)}</div>`;
 }
 function card(a){
   const bos = (a.urls||0) + (a.masks||0) === 0;
   const urlYok = !bos && (a.urls||0) === 0;
   const isaret = bos ? `<span class="nolk big" title="bu seride hiç oynatılabilir link kalmadı">${ic('ban')} link yok</span>`
               : urlYok ? `<span class="nolk" title="oynatılabilir url linki kalmadı (yalnız site içi player)">${ic('ban')} url yok</span>` : '';
-  return `<a class="card" href="#/anime/${encodeURIComponent(a.slug)}">${poster(a)}<span class="ct">${esc(a.baslik||a.slug)}</span><span class="cs">${esc((a.top||[]).slice(0,2).join(', ')||'kaynak yok')}</span>${isaret}</a>`;
+  return `<a class="card" href="#/anime/${encodeURIComponent(a.slug)}">${poster(a, SZ_GRID)}<span class="ct">${esc(a.baslik||a.slug)}</span><span class="cs">${esc((a.top||[]).slice(0,2).join(', ')||'kaynak yok')}</span>${isaret}</a>`;
 }
 
 /* ============ AniList zenginleştirme (PR1'den alındı) ============
@@ -1025,16 +1276,85 @@ async function alCek(slug, baslik){
   pr.catch(()=>{});   // hata sessizce düşer (çağıranın await'i ayrı)
   return pr;
 }
-function alPosterImg(a){   // önbellekte/toplu veride kapak varsa poster'e <img> ekler (yoksa boş)
+/* ============================================================
+   📸 srcset/sizes (MOBIL-QOL-PLANI.md §11)
+   ------------------------------------------------------------
+   ÖLÇÜM (28.09.2026, Chromium 954px pencere, DPR 1):
+     poster <img> doğal genişlik = **460 px**
+     ray kartı CSS genişliği     = **130 px**   (.rail .card)
+     → 130 px'lik yuvaya 460 px indiriliyordu = **3,5× fazla veri**
+
+   AniList CDN aynı dosyayı 3 boyutta sunuyor. ÖLÇÜLDÜ (28.09.2026,
+   2 bağımsız kapak dosyası, ikisinde de AYNI sonuç — `naturalWidth`):
+     cover/small  = **100 × 141**
+     cover/medium = **230 × 325**
+     cover/large  = **460 × 649**
+   Adres kalıbı: .../anime/cover/large/<dosya>.jpg
+   ⚠ `small` için önce 118px yazılmıştı (tahmin). Gerçek 100px. Yanlış `w`
+   tanımlayıcısı tarayıcıyı gereğinden BÜYÜK dosyaya yönlendirir
+   (veri kaybı) ya da gereğinden küçüğe (bulanık görsel). İkisini de
+   istemiyoruz; bu yüzden sayılar ölçülmüştür.
+
+   ⭐ `sizes` BAĞLAMA GÖRE değişir; bu yüzden `poster()` parametre alır:
+       ray  (relCard) → 118/130 px
+       grid (card)    → ~158 px
+   Sabit bir `sizes` yazsaydık ray 118px'i 158px ilan ederdi ve
+   tarayıcı `small` yerine `medium` seçerdi — kazanç 74%'den 50%'ye düşerdi.
+
+   ⚠ GUARD: adres kalıbı bilinmiyorsa srcset ÜRETİLMEZ, sade `src` kalır.
+   Kırık srcset = hiç görsel. Ölçülmemiş bir varsayımda bozuk resim
+   üretmektense kazançtan vazgeçiyoruz.
+   ============================================================ */
+function alPosterSrcset(c, sizes){
+  try{
+    /* ⭐ GUARD: `sizes` gelmezse `sizes="undefined"` yazılıyordu.
+       Geçersiz `sizes` tarayıcıca REDDEDILIR ve varsayılan `100vw`
+       devreye girer → 460w (büyük) indirilir, yani srcset kazandırmak
+       yerine kaybettirir. Ölçülen hata: ana sayfa öneri kutusunda
+       `sizes: "undefined"` ölçüldü. Kural: sizes yoksa srcset de yok. */
+    if (!sizes || sizes === 'undefined') return '';
+    // yalnız bilinen AniList kapak kalıbı
+    if (!/\/anime\/cover\/large\//.test(c)) return '';
+    const buyuk = c;
+    const orta  = c.replace('/cover/large/', '/cover/medium/');
+    const kucuk = c.replace('/cover/large/', '/cover/small/');
+    return ` srcset="${esc(kucuk)} 100w, ${esc(orta)} 230w, ${esc(buyuk)} 460w" sizes="${esc(sizes)}"`;
+  }catch(e){ return ''; }
+}
+/* ÖLÇÜLEN yuvalar (28.09.2026, DPR 1 tarayıcı):
+     ray  mobil 118px / masaüstü 130px   (.rail .card)
+     grid mobil ~158px                   (2 sütun) — .grid minmax(140px,1fr)
+   anime sayfası kapak kutusu: mobil ~320px / masaüstü ~260px (tahmin değil,
+   o kutu `sizes`'ı yanlış bildirirse görsel KIRILMAZ, sadece fazla indirilir;
+   bu yüzden geniş taraf seçildi). */
+const SZ_RAY  = '(max-width:720px) 118px, 130px';
+const SZ_GRID = '(max-width:720px) 158px, 158px';
+/* `.fposter` ölçüldü: masaüstü 180px (`width:180px`), mobil `width:36%`
+   → 36% × 328px kap = 118px. Bilerek 120px diyoruz: 2px fazla bildirmek
+   görseli bozmaz, eksik bildirmek bulanıklaştırır. */
+const SZ_FPOS = '(max-width:720px) 120px, 180px';
+/* `.aposter` CSS'ten birebir: mobil 88px, masaüstü 120px (ölçüldü: 120) */
+const SZ_APOS = '(max-width:720px) 88px, 120px';
+
+function alPosterImg(a, sizes){   // önbellekte/toplu veride kapak varsa poster'e <img> ekler (yoksa boş)
   const t = alToplu(a.slug);
   const c = t ? t.c : ((alKayit(a.slug)||{}).d||{}).c;
-  return c ? `<img src="${esc(c)}" alt="" loading="lazy" decoding="async" onload="this.classList.add('on')" onerror="this.remove()">` : '';
+  if (!c) return '';
+  return `<img src="${esc(c)}"${alPosterSrcset(c, sizes)} alt="" loading="lazy" decoding="async" onload="this.classList.add('on')" onerror="this.remove()">`;
 }
-function alKapakEkle(kok, d){   // mevcut poster kutusuna kapak görseli yerleştirir
+function alKapakEkle(kok, d, sizes){   // mevcut poster kutusuna kapak görseli yerleştirir
   if (!kok || !d || !d.c || kok.querySelector('img')) return;
   const img = document.createElement('img');
   img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
   img.onload = ()=> img.classList.add('on');
+  img.onerror = ()=> img.remove();
+  /* srcset: aynı koruma bloğu (alPosterSrcset) → tek doğruluk kaynağı.
+     `sizes` çağrı yerinden gelir; verilmezse srcset ÜRETİLMEZ. */
+  const ss = alPosterSrcset(d.c, sizes);
+  if (ss){
+    const m = ss.match(/srcset="([^"]*)"\s+sizes="([^"]*)"/);
+    if (m){ img.srcset = m[1]; img.sizes = m[2]; }
+  }
   img.src = d.c;
   kok.appendChild(img);
 }
@@ -1051,7 +1371,7 @@ async function alZenginlestir(slug, meta){
   const beklenen = '#/anime/' + encodeURIComponent(slug);
   const h = location.hash || '';
   if (h !== beklenen && h.indexOf(beklenen+'/') !== 0) return;   // kullanıcı başka sayfaya geçti
-  alKapakEkle(document.querySelector('.aposter .poster'), d);
+  alKapakEkle(document.querySelector('.aposter .poster'), d, SZ_APOS);
   const at = document.querySelector('.atxt');
   if (at && !at.querySelector('.ainfo')){
     const c = [];
@@ -1069,7 +1389,7 @@ let _landingD = null;
 function alOneriKapak(){   // ana sayfa "günün önerisi" kapak + gerçek banner zenginleştirmesi
   const a = _landingD;
   if (!a || !a.slug) return;
-  const uygula = d=> alKapakEkle(document.querySelector('.fposter .poster'), d);
+  const uygula = d=> alKapakEkle(document.querySelector('.fposter .poster'), d, SZ_FPOS);
   const t = alToplu(a.slug);
   if (t){
     uygula(t);
@@ -1116,7 +1436,7 @@ function landingHtml(){
   const href = '#/anime/'+encodeURIComponent(d.slug);
   return `
     <section class="feat" style="--h:${hueOf(d.slug)};--g:${(hueOf(d.slug)+35)%360}">
-      <a class="fposter" href="${href}" aria-label="${esc(d.baslik)}">${poster(d)}</a>
+      <a class="fposter" href="${href}" aria-label="${esc(d.baslik)}">${poster(d, SZ_FPOS)}</a>
       <div class="ftext">
         <span class="flabel">${ic('sun')} Günün önerisi</span>
         <h1>${esc(d.baslik)}</h1>
@@ -1333,6 +1653,8 @@ function renderKategoriler(){
 /* ============ anime sayfası ============ */
 function renderAnime(slug, data){
   const meta = ANIME.find(a=>a.slug===slug) || {baslik:slug, urls:0, masks:0, top:[]};
+  /* 📱 adres çubuğu durumu: hangi anime sayfasındayız (animeHashUret için) */
+  animeSlug = slug;
   /* SEZON FILTRESI: dosyanin icinde hem isaretli hem isaretsiz bolum varsa gosterilir.
      Isaretsiz bolumler 1. sezon kabul edilir. Dosyanin ADI zaten bir sezon
      belirtiyorsa (orn. kimi-ni-todoke-2nd-season) sekme gosterilmez: o dosyanin
@@ -1363,7 +1685,7 @@ function renderAnime(slug, data){
          Değer http(s) dışındaysa zaten uygulanmaz. -->
     <div class="hero" style="--h:${hu};--g:${(hu+35)%360}${bnr?`;--heroimg:url(&#39;${esc(bnr)}&#39;)`:''}">
     <div class="ahead">
-      <div class="aposter">${poster({slug, baslik:meta.baslik, eps:data.length})}</div>
+      <div class="aposter">${poster({slug, baslik:meta.baslik, eps:data.length}, SZ_APOS)}</div>
       <div class="atxt">
         <h1 class="anime-title">${esc(meta.baslik)}</h1>
         <div class="stats">
@@ -1394,9 +1716,22 @@ function renderAnime(slug, data){
     const tt = $('#tumTgl');
     const tumu = !!(tt && tt.checked);
     const sc = buildIndirScripts(slug, data, tumu);
-    indirFile('indir-'+slug+'.bat', sc.bat);
-    setTimeout(()=> indirFile('indir-'+slug+'.sh', sc.sh, 'text/x-shellscript;charset=utf-8'), 350);
-    flashDone(ib, 'indirildi ✓', 1600, ic('dl')+' Animeyi indir');
+    /* 📱 İki dosya: .bat ve .sh. ⚠ DENETİM BULGUSU: `.sh` dönüşü
+       ATILIYORDU — .bat başarılı olup .sh başarısız kalırsa kullanıcı
+       haberdar edilmiyordu. İkisi de kontrol ediliyor; hangisi
+       başarısızsa mesaj onu söylüyor. */
+    const r1 = indirFile('indir-'+slug+'.bat', sc.bat);
+    let r2 = INDIRILDI;
+    setTimeout(()=>{ r2 = indirFile('indir-'+slug+'.sh', sc.sh, 'text/x-shellscript;charset=utf-8'); }, 350);
+    Promise.resolve(r1).then(s=>{
+      /* .sh söz vermişti; sonucu beklemeden mesaj vermeyelim */
+      return Promise.all([s, Promise.resolve(r2)]);
+    }).then(([s1,s2])=>{
+      const kotu = (s1 !== INDIRILDI) ? s1 : s2;
+      const m = indirMesaj(kotu);
+      const etiket = ic('dl')+' Animeyi indir';
+      flashDone(ib, kotu === INDIRILDI ? 'indirildi ✓' : m.metin, kotu === INDIRILDI ? 1600 : m.sure, etiket);
+    }).catch(()=>{ flashDone(ib, 'indirilemedi', 2200, ic('dl')+' Animeyi indir'); });
   };
   appEl().querySelectorAll('.ep').forEach(el=>{
     el.onclick = ()=>{
@@ -1404,7 +1739,10 @@ function renderAnime(slug, data){
     };
   });
   appEl().querySelectorAll('.pager button[data-pg]').forEach(b=>{
-    b.onclick = ()=>{ epPage = +b.dataset.pg; renderAnime(slug, data); window.scrollTo(0,0); };
+    /* 📱 artık hash'e yazıyoruz; çizimi hashchange→route() yapacak.
+       Böylece "geri" tuşu bir sayfa geri gider (MOBIL-QOL-PLANI §9).
+       Doğrudan renderAnime çağırmak geri tuşunu bozuyordu. */
+    b.onclick = ()=>{ epPage = +b.dataset.pg; animeHashYaz(); };
   });
   const jg = $('#jumpGo');
   if (jg) jg.onclick = ()=>{
@@ -1414,12 +1752,13 @@ function renderAnime(slug, data){
       /* M7: sayı değilse slug ile dene (OVA/special gibi `no:null` bölümler
          `…-1`, `…-ova-1` ile biter; eski kural yalnız `-<n>-bolum` idi). */
       const q = norm(ham);
-      if (!q){ alert('Bir bölüm numarası ya da adı yaz.'); return; }
+      if (!q){ jumpMsg('Bir bölüm numarası ya da adı yaz.', true); return; }
       const es = data.filter(e=> norm((e.ad||'')+' '+e.slug).indexOf(q)!==-1);
-      if (!es.length){ alert('Bölüm bulunamadı: '+ham); return; }
+      if (!es.length){ jumpMsg('Bölüm bulunamadı: '+esc(ham), true); return; }
       if (es.length>1){
-        alert('Bu ad '+es.length+' bölümde geçiyor:\n\n'+es.slice(0,10).map(e=>'#'+(e.no!=null?e.no:'★')+' '+(e.ad||e.slug)).join('\n')
-              + (es.length>10?'\n…':'')+'\n\nLütfen bölüm numarası ile deneyin.');
+        jumpMsg('Bu ad <b>'+es.length+'</b> bölümde geçiyor: '+
+          es.slice(0,10).map(e=>'#'+(e.no!=null?e.no:'★')+' '+esc(e.ad||e.slug)).join(' · ')+
+          (es.length>10?' …':'')+' — bölüm numarası ile dene.', true);
         return;
       }
       gitBölüme(es[0]); return;
@@ -1444,14 +1783,16 @@ function renderAnime(slug, data){
       const q2 = norm(String(n));
       const es2 = data.filter(e=> e.no==null && e.slug.split('-').pop()===q2);
       if (es2.length){ gitBölüme(es2[0]); if (es2.length>1) cokluUyarisi(es2[0], es2); return; }
-      alert('Bölüm bulunamadı: '+n); return;
+      jumpMsg('Bölüm bulunamadı: '+esc(String(n)), true); return;
     }
   };
-  /* Çoklu eşleşme uyarısı: alert() yerine kutunun altına yazılır —
-     hem engelleyici değil hem de sessizce yutmaz. */
-  function cokluUyarisi(gidilen, hepsi){
-    const diger = hepsi.filter(e=> e!==gidilen);
-    if (!diger.length) return;
+  /* 📱 SATIR İÇİ UYARI — alert() değil.
+     Ölçüm (MOBIL-QOL-PLANI.md §2): mobil oturum ORT. 24 sn, masaüstü
+     1 dk 4 sn. Yerel `alert()` bir 24 sn'lik oturumda SERT DURAK:
+     sistem kutusu çıkar, OK'a basılır, geri dönülür. v1'de 6 adet vardı
+     ve hepsi bu kutuda. Düzeltmesi zaten repoda: `cokluUyarisi`
+     (aşağıda) satır içi yazıyordu; diğer 5'i aynı kalıba taşındı. */
+  function jumpMsg(html, kotu){
     let el = document.getElementById('jumpWarn');
     if (!el){
       el = document.createElement('div');
@@ -1461,9 +1802,29 @@ function renderAnime(slug, data){
       const jb = document.getElementById('jumpGo');
       (jb ? jb.parentNode : appEl()).appendChild(el);
     }
-    el.innerHTML = '⚠ #'+(gidilen.no!=null?gidilen.no:'★')+' bu dosyada '+hepsi.length+
-      ' bölümde daha geçiyor — <b>'+(gidilen.ad||gidilen.slug)+'</b> açıldı. Diğerlerine listeden tıklayarak ulaş: '+
-      diger.slice(0,6).map(e=>esc(e.ad||e.slug)).join(' · ')+(diger.length>6?' …':'');
+    /* ⚠ DENETİM DÜZELTMESİ (28.09.2026): `jumpMsg` VE `cokluUyarisi`
+       aynı `#jumpWarn` düğümünü kullanıyor. `jumpMsg` kırmızı kenarlık/
+       renk yazıyordu, `cokluUyarisi` ise yalnız `innerHTML`'i yazıp o
+       stilleri SIFIRLAMIYORDU. Ulaşılabilir yol: `gitBölüme` → `ix===-1`
+       → `jumpMsg(...,true)` kırmızı → dönüş → `cokluUyarisi` → "çoklu
+       eşleşme" BİLGİSİ kırmızı kenarlıklı ve kırmızı yazıyla kalıyordu.
+       Düzeltme: ikisi de tek yardımcıya (`jumpGoster`) veriyor; stil
+       her seferinde baştan yazılıyor. */
+    el.style.borderLeft    = kotu ? '3px solid var(--bad)' : '';
+    el.style.paddingLeft   = kotu ? '8px' : '';
+    el.style.color         = kotu ? 'var(--bad)' : '';
+    el.innerHTML = html;
+  }
+  /* Çoklu eşleşme uyarısı: alert() yerine kutunun altına yazılır —
+     hem engelleyici değil hem de sessizce yutmaz. */
+  function cokluUyarisi(gidilen, hepsi){
+    const diger = hepsi.filter(e=> e!==gidilen);
+    if (!diger.length) return;
+    /* ⚠ esc() KAYIPSI (denetim): `gidilen.ad` diğerlerinden farklı olarak
+       innerHTML'e HAM konuyordu. Bölüm adında `<`/`"` varsa HTML'e sızar. */
+    jumpMsg('⚠ #'+(gidilen.no!=null?gidilen.no:'★')+' bu dosyada '+hepsi.length+
+      ' bölümde daha geçiyor — <b>'+esc(gidilen.ad||gidilen.slug)+'</b> açıldı. Diğerlerine listeden tıklayarak ulaş: '+
+      diger.slice(0,6).map(e=>esc(e.ad||e.slug)).join(' · ')+(diger.length>6?' …':''), false);
   }
   /* Hedef bölümün sezonu seçili değilse sezona OTOMATİK geçilir (M7):
      eskiden kutu yalnız sezon filtresinin GÖRDÜĞÜ bölümlerde arıyordu, bu
@@ -1473,14 +1834,19 @@ function renderAnime(slug, data){
     if (sezonlar && sezonlar.indexOf(s)!==-1 && s!==epSezon) epSezon = s;
     const gl = sezonlar ? data.filter(e=>sezonNo(e)===epSezon) : data;
     const ix = gl.indexOf(ep);
-    if (ix===-1){ alert('Bölüm bulunamadı: '+(ep.ad||ep.slug)); return; }
+    if (ix===-1){ jumpMsg('Bölüm bulunamadı: '+esc(ep.ad||ep.slug), true); return; }
     epPage = Math.floor(ix/EP_PAGE)+1;
     renderAnime(slug, data);
+    /* 📱 adres de güncellensin ama GEÇMİŞ GİRDİSİ üretilmesin:
+       bu bir "atlama" eylemi, kullanıcı sayfaları gezmedi. replaceState
+       URL'yi doğru tutar, geri tuşu 20 kazara geri atlamaz. */
+    animeHashEsyle();
     const el = appEl().querySelectorAll('.ep')[ix-(epPage-1)*EP_PAGE];
     if (el){ el.scrollIntoView({block:'center'}); el.style.borderColor='var(--ac2)'; }
   }
   appEl().querySelectorAll('.sezbtn').forEach(b=>{
-    b.onclick = ()=>{ epSezon = +b.dataset.sz; epPage = 1; renderAnime(slug, data); window.scrollTo(0,0); };
+    /* 📱 sezon değişimi de geçmiş girdisi üretir (geri tuşu) */
+    b.onclick = ()=>{ epSezon = +b.dataset.sz; epPage = 1; animeHashYaz(); };
   });
   alZenginlestir(slug, meta);   // PR1: AniList kapak + tür + puan + özet (başarısızsa sessiz)
 }
@@ -1533,7 +1899,7 @@ function relCard(a){
   const tag = relTag(a);
   return `<a class="card rel-card" href="#/anime/${encodeURIComponent(a.slug)}">
     ${tag?`<span class="rel-tag">${esc(tag)}</span>`:''}
-    ${poster(a)}<span class="ct">${esc(a.baslik||a.slug)}</span>
+    ${poster(a, SZ_RAY)}<span class="ct">${esc(a.baslik||a.slug)}</span>
     <span class="cs">${esc(a.eps?a.eps+' bölüm':'bölüm yok')}</span></a>`;
 }
 function relatedHtml(slug){
@@ -1560,7 +1926,16 @@ function epNavHtml(slug, data, ep){
   </div>`;
 }
 
-/* ============ sağdaki bölüm listesi (oynatıcı sayfası) ============ */
+/* ============ sağdaki bölüm listesi (oynatıcı sayfası) ============
+   📱 SAYFALAMA EKLENDİ (MOBIL-QOL-PLANI.md §3)
+   v1: `data.map(...)` ile TÜM bölümler tek seferde basılıyordu.
+       One Piece = 1.166 bölüm = 1.166 <a> düğümü; filtre de `a.hidden`
+       ile O(n), otomatik kaydırma da hepsine layout zorluyordu.
+       Anime sayfası zaten EP_PAGE=100 ile sayfalanıyordu; oynatıcı sayfası
+       değildi. Düşük uçlu Android'de donma.
+   Yeni: 200'lük sayfalar. Sayfa 1 = ilk bölümler; etkin bölüm hangi
+   sayfadaysa ilk açılışta O sayfa gösterilir. */
+const EP_SIDE_PAGE = 200;
 function epSideHtml(slug, data, curEp){
   const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e, data);
   const sz = sezonListesi(slug, data);
@@ -1569,12 +1944,22 @@ function epSideHtml(slug, data, curEp){
     sz.map(s=>{ const n = data.filter(e=>sezonNo(e)===s).length;
       return `<button class="fchip sezbtn2${s===curSz?' on':''}" data-sz="${s}" type="button">${s}. Sezon <b>${n}</b></button>`; }).join('') +
     `</div>` : '';
+  /* etkin bölümün sayfası */
+  let basSayfa = 1;
+  if (curEp){ const ix = data.indexOf(curEp); if (ix>=0) basSayfa = Math.floor(ix/EP_SIDE_PAGE)+1; }
+  const dilim = data.slice((basSayfa-1)*EP_SIDE_PAGE, basSayfa*EP_SIDE_PAGE);
+  const toplamSayfa = Math.max(1, Math.ceil(data.length/EP_SIDE_PAGE));
+  /* sayfa düğmeleri: sayfaDugmeleriHtml() ile AYNI üretici (pencere + …) —
+     ilk sürümde epSideHtml kendi dizisini basıyordu, sayfa değişince
+     başka biçimde yeniden basılıyordu → ilk yüklemede 6 düğme, 2. tıklamada 5. */
+  const sayfaDugmeleri = toplamSayfa>1
+    ? `<div class="els-pager">${sayfaDugmeleriHtmlFrom(data.length, basSayfa)}</div>` : '';
   return `<aside class="eplist-side">
     <div class="els-head">${ic('list')} Bölüm Listesi <b>${data.length}</b></div>
     ${sezonRowSide}
     <div class="els-search">${ic('search')}<input id="epFilter" type="search" placeholder="Bölüm filtrele..." autocomplete="off" spellcheck="false" aria-label="Bölüm filtrele"></div>
-    <div class="els-body" id="elsBody">
-      ${data.map(e=>{
+    <div class="els-body" id="elsBody" data-toplam="${data.length}" data-sayfa="${basSayfa}" data-sayfa-sayisi="${toplamSayfa}">
+      ${dilim.map(e=>{
         const on = e===curEp;
         const no = e.no!=null ? String(e.no) : '★';
         return `<a class="els-item${on?' on':''}" href="${href(e)}" data-sz="${sezonNo(e)}" data-t="${esc(norm(no+' '+(e.ad||'')+' '+(e.slug||'')))}">
@@ -1583,9 +1968,14 @@ function epSideHtml(slug, data, curEp){
       }).join('')}
       <div class="els-empty" id="elsEmpty" hidden>Eşleşen bölüm yok.</div>
     </div>
+    <div class="els-sayfa-yazi" id="elsSayfaYazi" hidden></div>
+    ${sayfaDugmeleri}
   </aside>`;
 }
-function bindEpSide(slug, data){
+/* curEp EKLENDİ: sayfalama etkin bölümü "on" işaretlemeye devam etmeli.
+   v1'de yoktu ve ilk yazdığım sürümde `curEp` diye bir değişkene başvuruluyordu
+   → oyuncu sayfası HER AÇILIŞTA ReferenceError veriyordu. */
+function bindEpSide(slug, data, curEp){
   const body = document.getElementById('elsBody');
   if (!body) return;
   const aktif = body.querySelector('.els-item.on');
@@ -1616,6 +2006,35 @@ function bindEpSide(slug, data){
     });
     const bos = document.getElementById('elsEmpty');
     if (bos) bos.hidden = gorunen>0;
+    /* ⭐ SAYFA BAĞI (MOBIL-QOL-PLANI.md §3): filtre artık TÜM bölümleri
+       görmüyor, yalnız görünen 200'ü. Sessizce "bulunamadı" demek
+       yanlış olurdu — kullanıcı sayfayı değiştirip aramak zorunda kalır.
+       Bunun yerine SAYIN veriyoruz ve kaç sayfa olduğunu da söylüyoruz.
+       DÜZELTME: bu div `els-body`'nin DIŞINDA (kutu altında); ilk yazdığım
+       sürümde `body.querySelector('.els-sayfa-yazi')` ile aranıyordu ve
+       daima null dönüyordu → sayaç hiç görünmedi. getElementById. */
+    const sy = document.getElementById('elsSayfaYazi');
+    if (sy){
+      const toplam = parseInt(body.dataset.toplam||'0',10);
+      const nSayfa = parseInt(body.dataset.sayfaSayisi||'1',10);
+      if (!q && !secSz){
+        sy.hidden = true;
+      }else{
+        sy.hidden = false;
+        sy.innerHTML = gorunen===0
+          ? 'Bu sayfada eşleşme yok. ' + (nSayfa>1
+              ? 'Filtre <b>'+nSayfa+'</b> sayfanın tümünde aranır — diğer sayfalara bak.'
+              : 'Filtre tüm '+toplam+' bölümde arandı, eşleşme yok.')
+          : 'Bu sayfada <b>'+gorunen+'</b> eşleşme' +
+            (nSayfa>1 ? ' · '+(nSayfa*EP_SIDE_PAGE < toplam
+                ? 'toplam '+toplam+' bölüm, '+nSayfa+' sayfa'
+                : 'son sayfa')
+              /* `data-sayfa` denetimde "yazılıyor ama hiç okunmuyor" diye
+                 işaretlendi. Ölü öznitelik bırakmak yerine kullanıldı:
+                 kullanıcı hangi sayfada olduğunu görsün. */
+              + ' (sayfa '+body.dataset.sayfa+'/'+nSayfa+')' : '');
+      }
+    }
   };
   if (sr) sr.querySelectorAll('.sezbtn2').forEach(b=>{
     b.onclick = ()=>{
@@ -1625,7 +2044,75 @@ function bindEpSide(slug, data){
     };
   });
   if (f) f.oninput = uygula;
+  /* 📱 SAYFA DÜĞMELERİ — TEK DELEGASYONLU DİNLEYİCİ
+     İLK YAZDIĞIM SÜRÜM BOZUKTU: düğme `onclick`lerinin içine `innerHTML`
+     ile yeniden basılıyor, sonra YENİDEN `onclick` bağlanıyordu; hem
+     yinelenmiş hem de ikinci tıklamada iki sayfa birden dönüyordu.
+     Doğrusu: dinleyiciyi `.els-pager` KABUNA bir kez bağla, öğeleri
+     serbestçe değiştir — `onclick` kabın üstünde olduğu için yeniden
+     basılan düğmeler de çalışır. */
+  const pagerEl = document.querySelector('.els-pager');
+  if (pagerEl) pagerEl.onclick = (ev)=>{
+    const btn = ev.target && ev.target.closest ? ev.target.closest('[data-els-p]') : null;
+    if (!btn || !pagerEl.contains(btn)) return;
+    ev.preventDefault();
+    /* hash YAZILMAZ: oynatıcı sayfasındayız, bölüm DEĞİŞTİRİLMEK
+       istiyoruz. `location.hash` yazsaydık route() tetiklenir, oynatıcı
+       baştan yüklenirdi. */
+    epSideSayfala(body, slug, data, curEp, +btn.dataset.elsP, uygula);
+  };
   uygula();
+}
+/* 📱 Kenar listede tek sayfayı değiştir (oynatıcıyı YENİDEN YÜKLEMEDEN).
+   p        : 1 tabanlı sayfa no
+   uygulaSon: sayfa basıldıktan sonra filtre+sezon+sayaç uygulayan fn */
+function epSideSayfala(body, slug, data, curEp, p, uygulaSon){
+  const ix0 = (p-1)*EP_SIDE_PAGE;
+  const dilim = data.slice(ix0, ix0+EP_SIDE_PAGE);
+  const href = e => '#/anime/'+encodeURIComponent(slug)+'/'+bolumIdFor(e, data);
+  body.dataset.sayfa = String(p);
+  let html = '';
+  dilim.forEach(e=>{
+    const on = e===curEp;
+    const no = e.no!=null ? String(e.no) : '★';
+    html += `<a class="els-item${on?' on':''}" href="${href(e)}" data-sz="${sezonNo(e)}" data-t="${esc(norm(no+' '+(e.ad||'')+' '+(e.slug||'')))}">
+      <span class="n">${esc(no)}</span><span class="t">${esc(e.ad||e.slug)}</span></a>`;
+  });
+  /* ⚠ `hidden` ŞART: ilk sürüm buraya `elsEmpty`'yi `hidden` OLMADAN
+     basıyordu → 200 bölüm varken bile "Eşleşen bölüm yok" yazıyordu.
+     Doğrusu: ilk çizimde `hidden` ile basar, sonrası `uygula()` yönetir. */
+  body.innerHTML = html + '<div class="els-empty" id="elsEmpty" hidden>Eşleşen bölüm yok.</div>';
+  body.scrollTop = 0;                        // yeni sayfa → başa dön
+  /* sayfa düğmelerini tazele (aktif olanı + pencereyi güncelle) */
+  const pagerEl = document.querySelector('.els-pager');
+  if (pagerEl) pagerEl.innerHTML = sayfaDugmeleriHtml(p);
+  if (typeof uygulaSon === 'function') uygulaSon();   // filtre+sezon+sayaç
+}
+/* Sayfa düğmeleri: 5.000 bölümlü bir anime 25 sayfa ederdi → 25 düğme.
+   Pencere: 1 … p-1 [p] p+1 … n
+   ⚠ TEK ÜRETİCİ: hem ilk çizim (epSideHtml) hem sayfa değiştirme
+   (epSideSayfala) BUNU çağırır. Ayrı ayrı dizi kodu yazılmıştı ve
+   ikisi farklı sayıda düğme üretiyordu. */
+function sayfaDugmeleriHtmlFrom(toplam, p){
+  const n = Math.max(1, Math.ceil(toplam/EP_SIDE_PAGE));
+  if (n<=1) return '';
+  const gor = new Set([1, n, p, p-1, p+1]);
+  if (p<=3){ [2,3,4].forEach(x=>gor.add(x)); }
+  if (p>=n-2){ [n-1,n-2,n-3].forEach(x=>gor.add(x)); }
+  const sira = [...gor].filter(x=> x>=1 && x<=n).sort((a,b)=>a-b);
+  let out = '', onceki = 0;
+  sira.forEach(x=>{
+    if (x - onceki > 1) out += '<span class="gap" aria-hidden="true">…</span>';
+    out += `<button type="button" data-els-p="${x}" class="${x===p?'on':''}"${x===p?' aria-current="page"':''}>${x}</button>`;
+    onceki = x;
+  });
+  return out;
+}
+/* sayfa değiştikten sonra: toplamı DOM'dan okuyup yeniden bas */
+function sayfaDugmeleriHtml(p){
+  const body = document.getElementById('elsBody');
+  if (!body) return '';
+  return sayfaDugmeleriHtmlFrom(parseInt(body.dataset.toplam||'0',10), p);
 }
 
 /* ============ bölüm seçenekleri sayfası ============ */
@@ -1693,14 +2180,19 @@ function renderOptions(slug, data, bolumId){
   document.title = `${meta.baslik} — ${ep.ad} | TürkAnime Arşiv`;
   const ei = $('#epIndir');
   if (ei) ei.onclick = ()=>{
-    if (!ilkUrl){ alert('Bu bölümde indirilebilir url linki yok.'); return; }
+    /* 📱 alert() -> düğmenin kendi üstünde flashDone. Aynı bilgi, engelleyici
+       sistem kutusu yok. (MOBIL-QOL-PLANI.md §2) */
+    if (!ilkUrl){ flashDone(ei, 'bu bölümde indirilebilir url yok', 2400, ic('dl')+' Bu bölümü indir'); return; }
     copyText(ytCmd(ilkUrl.url, num+'. Bolum.mp4')).then(ok=> flashDone(ei, ok?'kopyalandı ✓':'pano yazılamadı', ok?1500:2600, ic('dl')+' Bu bölümü indir'));
   };
   const ex = $('#exportBtn');
   if (ex) ex.onclick = ()=>{
     const payload = {kaldirilan_url: bekleyenKaldirilan(), tarih: new Date().toISOString()};
-    indirFile('el_degisiklikleri.json', JSON.stringify(payload, null, 2), 'application/json');
-    flashDone(ex, 'indirildi ✓', 1500);
+    const ok = indirFile('el_degisiklikleri.json', JSON.stringify(payload, null, 2), 'application/json');
+    Promise.resolve(ok).then(g=>{
+      const m = indirMesaj(g);
+      flashDone(ex, m.metin, m.sure);
+    }).catch(()=>{ flashDone(ex, 'indirilemedi', 2200); });
   };
   /* M3/M4 çip tıklama */
   appEl().querySelectorAll('.fchip[data-dim]').forEach(b=>{
@@ -1887,6 +2379,15 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
     </div>`;
   if (!cur){
     /* PR1 dayanıklılık: hiç oynatılabilir link kalmamışsa düzgün boş-durum — çökme yok */
+    /* ⭐ DENETİM DÜZELTMESİ (28.09.2026): `player_view` bu dalın
+       ÖTESİNDE gönderiliyordu, yani "oynatılabilir kaynağı kalmamış
+       oynatıcı" vakası PAYDANIN DIŞINDA kalıyordu. Denetlemek istediğimiz
+       tam olarak bu vaka. `player_nosource` ayrıca gönderilir ki
+       paydayı bozmadan "kaçıtı" sayılabilsin. */
+    olcum('player_view', {anime:slug, oynatici:'yok', host:'bilinmiyor',
+                          kaynakSayisi:kay.length, gomulemez:'belirsiz'});
+    olcum('player_nosource', {anime:slug, bolumSayisi:(ep.links||[]).length,
+                              oynatilabilir:optN, siteIci:maskSay});
     const bosMesaj = optN
       ? `Bu bölümde gömülebilir (url) kaynak yok.${maskSay?' Site içi player linkleri seçenekler listesinde.':''}`
       : `Bu bölümün oynatılabilir kaynağı kalmadı.${(ep.links||[]).length && maskSay===0?' Tüm linkler silinmiş/kaldırılmış olabilir.':''}`;
@@ -1918,7 +2419,7 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
         <b>${esc(cur.l.player)}</b> bu sitede oynatıcıya izin vermiyor.
         <div class="sub">Video <b>silinmedi</b> — barındığı sitede açılıp izlenebilir.
         ${src?`Aşağıdaki <b>kaynak linkini</b> kullan:`:''}</div>
-        ${src?`<a class="btn" href="${esc(src)}" target="_blank" rel="noopener noreferrer">${ic('ar')} Kaynak linkini aç</a>`:''}
+        ${src?`<a class="btn manuelKaynak" href="${esc(src)}" target="_blank" rel="noopener noreferrer">${ic('ar')} Kaynak linkini aç</a>`:''}
         <div class="sub">${ic('link')} Başka bir kaynak varsa üstteki KAYNAK çiplerinden seçebilirsin.</div>
       </div>`
     : `<div class="note">Bu seçenek <b>${esc(cur.l.tip)}</b> tipinde; doğrudan gömülemiyor. Kaynak linkinden siteye gidip izleyebilirsin.</div>`;
@@ -1990,10 +2491,62 @@ function renderPlayer(slug, data, bolumId, playerName, idxStr){
     </div>
   `;
   document.title = `${meta.baslik}${ep.no!=null?' #'+ep.no:''} — ${pNameCur} | TürkAnime Arşiv`;
-  bindEpSide(slug, data);
+  bindEpSide(slug, data, ep);   // curEp: sayfalama etkin bölümü "on" tutmaya devam etsin
+  /* ============================================================
+     📊 OYNATICI ÖLÇÜMÜ (MOBIL-QOL-PLANI.md §12.6)
+     `player_view` PAYDADIR: toplam kaç oynatıcı sayfası açıldı.
+     Bu olmadan "kaçıtı / oynatıcı çalışmadı" oranı HESAPLANAMAZ.
+     `player_view` bilerek çift sayılmıyor (bkz. `olcum`).
+     ============================================================ */
+  olcum('player_view', {
+    /* slug herkese açık anime adı — kişisel veri değil */
+    anime: slug,
+    oynatici: cur ? String(cur.l.player||'?') : '?',
+    host: cur ? hostAdedi(cur.l.url) : 'bilinmiyor',
+    kaynakSayisi: kay.length,
+    /* ⭐ gömülemeyen host: kullanıcı boş bir kutu görüyor */
+    gomulemez: hostGomulemez ? 'evet' : 'hayir'
+  });
+  if (hostGomulemez){
+    olcum('player_blocked', {anime: slug, oynatici: cur?String(cur.l.player):'?',
+                             host: cur?hostAdedi(cur.l.url):'bilinmiyor'});
+  }
+  /* 📊 "Kaynak linkini aç" = EN GÜÇLÜ hata sinyali. Kullanıcı gömülü
+     oynatıcıyı bırakıp dış siteye kaçıyor; genelde oynatıcı çalışmadı
+     demektir. `target="_blank"` olduğu için sayfadan ayrılmıyor —
+     dinleyici `click`te bağlanmalı, sayfa yüklenirken değil. */
+  const mk = appEl().querySelector('.manuelKaynak');
+  if (mk) mk.addEventListener('click', ()=>{
+    olcum('player_manuel_link', {
+      anime: slug,
+      oynatici: cur ? String(cur.l.player||'?') : '?',
+      host: cur ? hostAdedi(cur.l.url) : 'bilinmiyor',
+      gomulemez: hostGomulemez ? 'evet' : 'hayir'
+    });
+  });
   /* KAYNAK çipi → o kaynağın player sayfası */
   appEl().querySelectorAll('.kchip').forEach(b=>{
     b.onclick = ()=>{
+      /* ⭐ kaynak değişimi: ilk oynatıcı çalışmadıysa kullanıcı buraya
+         gelir. Doğrudan gözlenebilir bir olay — tahmin değil.
+         ⚠ HATA DÜZELTMESİ: ilk sürüm yalnız OYNATICI ADINI karşılaştırıyordu.
+         One Piece 1. bölümde 14 kaynak var ve ÇOKLUSU "SIBNET"; kullanıcı
+         başka bir SIBNET videosuna geçince (i değişir, ad aynı kalır) olay
+         TETİKLENMİYORDU — oysa ilk videonun çalışmadığının en güçlü
+         işareti tam olarak budur. Doğrusu: hedef çipin (ad + indeks)
+         aktif çipten FARKLI olup olmadığına bakmak. */
+      const aktif = appEl().querySelector('.kchip.on');
+      const ayni = aktif && aktif.dataset.pl === b.dataset.pl && aktif.dataset.i === b.dataset.i;
+      if (!ayni){
+        olcum('player_source_switch', {
+          anime: slug,
+          gecilen: cur ? String(cur.l.player||'?') : '?',
+          gecilen_host: cur ? hostAdedi(cur.l.url) : 'bilinmiyor',
+          secilen: decodeURIComponent(b.dataset.pl||'?'),
+          /* aynı oynatıcı, başka video mu? ayrı say: en ayırt edici durum */
+          ayni_oynatici: !!(aktif && aktif.dataset.pl === b.dataset.pl)
+        });
+      }
       location.hash = `#/anime/${encodeURIComponent(slug)}/${bolumId}/${b.dataset.pl}/${b.dataset.i}`;
     };
   });
@@ -2234,14 +2787,18 @@ function bindCopy(){
 
 /* ============ router ============ */
 let routeToken = 0;
+/* 📱 animeHashUret() bunu okur: hangi anime sayfasındayız */
+let animeSlug = '';
 
 function showLoading(msg){
   appEl().innerHTML = `<div class="loading"><div class="spinner"></div><div>${esc(msg||'Yükleniyor...')}</div></div>`;
 }
 
 function navAktif(){
-  /* M1: üst bar nav aktif bağlantısı */
-  const h = location.hash||'';
+  /* M1: üst bar nav aktif bağlantısı
+     ⭐ sorgu ayrılıyor: `#/anime/x?p=3` de "animeler" bölümündedir.
+     `startsWith` zaten çalışıyordu ama tutarlılık için ham yol kullanılıyor. */
+  const h = (location.hash||'').split('?')[0];
   const sec = (h.startsWith('#/animeler') || h.startsWith('#/anime/')) ? 'animeler'
             : h.startsWith('#/kategoriler') ? 'kategoriler' : 'ana';
   document.querySelectorAll('.topnav a').forEach(a=> a.classList.toggle('on', a.dataset.nav===sec));
@@ -2249,7 +2806,15 @@ function navAktif(){
 
 function route(){
   const tok = ++routeToken;
-  const h = location.hash||'';
+  const ham = location.hash||'';
+  /* ⭐ SORGUDAN ÖNCE AYIR (28.09.2026, canlı testte bulundu).
+     Anime sayfası artık `#/anime/<slug>?s=2&p=3` biçiminde adres
+     üretiyor (geri tuşu için). `h` sorguyu İÇERİYORSA alttaki regex
+     `([^/]+)` slug'a `?p=3`'ü yapıştırıyor, slug `one-piece?p=3`
+     oluyor, `b/one-piece?p=3.js` 404 veriyor ve sayfa 0 bölümle
+     açılıyordu. ÖLÇÜLDÜ: `?p=3` yazınca `epSayisi: 0`.
+     Düzeltme: eşleştirme SORGUSUZ yola yapılır, durum sorgudan okunur. */
+  const h = ham.split('?')[0];
   document.title = 'TürkAnime Arşiv — İzle';
   navAktif();
   if (!h || h==='#' || h==='#/' || h.startsWith('#/ara')){
@@ -2280,11 +2845,97 @@ function route(){
     if (bolumId && player==='liste') renderOptions(slug, data, bolumId);       // yönetim/seçenek listesi
     else if (bolumId && player) renderPlayer(slug, data, bolumId, player, idx);
     else if (bolumId) renderPlayer(slug, data, bolumId, null, null);           // bölüm → doğrudan player
-    else { epPage = 1; epSezon = 1; renderAnime(slug, data); }
+    else {
+      animeDurumUygula(ham);
+      renderAnime(slug, data);
+      /* 📱 sezon/sayfa değişti → başa kaydır. ÖNCEKİ hâlde bu iki
+         handler kendi `window.scrollTo(0,0)`'unu yapıyordu; çizim
+         hashchange ile taşındıktan sonra o çağrı yanlış zamanda
+         çalışıyor, sayfa ortada kalıyordu. */
+      if (animeScrollTop){ animeScrollTop = false; window.scrollTo(0,0); }
+    }
   }).catch(err=>{
     if (tok!==routeToken) return;
     appEl().innerHTML = `<div class="errbox"><b>${esc(slug)}</b> için veri bulunamadı: ${esc(err.message)}<br>b/${esc(slug)}.js dosyası siteyle aynı klasörde olmalı.<br><a href="#/ara">Aramaya dön</a></div>`;
   });
+}
+
+/* ============================================================
+   📏 HEADER YÜKSEKLİĞİNİ ÖLÇ (yapışkan ofset kaynağı)
+   ------------------------------------------------------------
+   `scroll-padding-top` ve `.eplist-side{top:…}` `--hdr-h`'i okur.
+   Sabit sayı yanlış oluyordu: masaüstünde ölçülen 73px, dosyada 76px
+   yazılıydı. Mobilde logo 40px'e düştüğü için orada başka bir değer
+   gerekir — sabit sayı MOBİLDE DE yanlış olurdu.
+   `ResizeObserver` yoksa `resize` olayına düşüyoruz.
+   ============================================================ */
+function hdrOlc(){
+  const h = document.querySelector('header.top');
+  if (!h) return;
+  const yuk = Math.round(h.getBoundingClientRect().height);
+  if (yuk > 0) document.documentElement.style.setProperty('--hdr-h', yuk+'px');
+}
+hdrOlc();
+if (window.ResizeObserver){
+  try{ new ResizeObserver(hdrOlc).observe(document.querySelector('header.top')); }catch(e){}
+}else{
+  window.addEventListener('resize', hdrOlc);
+}
+
+/* ============================================================
+   📱 ADRES ÇUBUĞU DURUMU — geri tuşu (MOBIL-QOL-PLANI.md §9)
+   ------------------------------------------------------------
+   SORUN (ölçülen): `popstate` 0, `history.pushState` 0. Yani sezon
+   değiştiren ya da 5. sayfaya geçen kullanıcı GEÇMİŞ GİRDİSİ
+   oluşturmuyor; "geri" ana sayfaya dönüyor. Mobil oturum ort. 24 sn
+   ve %55 çıkma oranı var — yanlış dokunuşun bedeli çok yüksek.
+
+   ÇÖZÜM: sezon/sayfa değişimini `location.hash`'e YAZ. `hashchange`
+   zaten bağlı → geri tuşu doğal çalışır, ek `popstate` gerekmez.
+
+   ⚠ DÖNGÜ KORUMASI: olaylar yalnız `location.hash` YAZAR; çizimi
+     `hashchange` → `route()` yapar. Handler'da `renderAnime`
+     çağrılmaz → tek yönlü akış, geri besleme yok.
+
+   ⚠ VARSAYILANLAR YAZILMAZ: sezon 1 + sayfa 1 ise adres `#/anime/x`
+       olarak kalır. Yazılsaydı 2. sayfaya giderken "geri" basılsa bile
+       görünür değişiklik olmaz, ama geçmiş girdisi oluşurdu —
+       kullanıcı boşa geri giderdi.
+   ============================================================ */
+let animeScrollTop = false;   /* sezon/sayfa değişti → başa kaydır */
+function animeDurumOku(h){
+  const i = String(h||'').indexOf('?');
+  if (i === -1) return null;
+  const q = new URLSearchParams(String(h).slice(i+1));
+  return { s: q.get('s'), p: q.get('p') };
+}
+function animeDurumUygula(h){
+  const d = animeDurumOku(h);
+  const s = d && d.s!=null ? parseInt(d.s,10) : 1;
+  const p = d && d.p!=null ? parseInt(d.p,10) : 1;
+  epSezon = (isFinite(s) && s>0) ? s : 1;
+  epPage  = (isFinite(p) && p>0) ? p : 1;
+}
+function animeHashUret(){
+  const slug = animeSlug;
+  if (!slug) return '';
+  const p = (epSezon && epSezon!==1) ? ('?s='+epSezon) : '';
+  const q = (epPage  && epPage !==1) ? (p ? '&p='+epPage : '?p='+epPage) : '';
+  return '#/anime/'+encodeURIComponent(slug)+p+q;
+}
+/* sezon/sayfa değişiminden sonra adresi güncelle (GEÇMİŞ GİRDİSİ üretir) */
+function animeHashYaz(){
+  const yeni = animeHashUret();
+  if (!yeni || location.hash === yeni) return;
+  animeScrollTop = true;
+  location.hash = yeni;
+}
+/* görüntü ZATEN çizildiyse adresi sessizce düzelt (geçmiş girdisi OLMAZ).
+   "Bölüme git" kutusu bunu kullanır: çizim + kaydırma elle yapılıyor. */
+function animeHashEsyle(){
+  const yeni = animeHashUret();
+  if (!yeni || location.hash === yeni) return;
+  try{ history.replaceState(null, '', yeni); }catch(e){}
 }
 
 /* ============ arama girişi ============ */
@@ -2313,6 +2964,52 @@ document.querySelectorAll('a.logo, a[data-nav="ana"], a[data-nav="ana-mobil"], .
 window.addEventListener('hashchange', route);
 route();
 pingServer();  // M7b: yardımcı sunucu varsa "çöz" butonları görünür olur
+
+/* ============================================================
+   📱 ANILIST GELİNCE YENİDEN ÇİZİM (MOBIL-QOL-PLANI.md §1)
+   anilist.js artık `defer` ile geliyor (2,7 MB, ilk boyamayı bloklamıyor).
+   Karşılığında: veri geç geldiği için ekranın yeniden çizilmesi gerekiyor.
+   Yoksa kapak/banner/özet/puan HİÇ görünmezdi.
+
+   ⚠ OYNATICI SAYFASINDA YAPILMAZ — bu bir hatadır, düzeltilmiş hâli.
+      İlk yazdığım sürüm `h.startsWith('#/anime/')` diyordu; oynatıcı
+      adresi de `#/anime/` ile BAŞLAR (`#/anime/one-piece/1/VIDEOPLAYER/0`),
+      dolayısıyla `route()` → `renderPlayer()` → `<iframe>` YENİDEN YÜKLENİYORDU.
+      Sonuç: kullanıcı videoyu açtıktan saniyeler sonra video BAŞTAN başlıyordu.
+      Trafiğin %65,9'u mobil ve oturum ort. 24 sn — yani kullanıcının
+      izleme anı tam olarak bu kayıp. `alZenginlestir()` yalnız
+      `renderAnime()` içinde çağrıldığı için oynatıcıda hiçbir şey
+      kaybedilmiyor; doğru davranış "hiçbir şey yapma".
+
+   `defer` betiğin bu bloğu ÇALIŞTIRMADAN önce inmesini garanti eder
+   (defer, belgede konumundan sonra sırayla, DOMContentLoaded'dan önce).
+   Yine de `anilistReady` bayrağıyla çift tetiklemeyi engelliyoruz.
+   ============================================================ */
+let anilistReady = false;
+window.addEventListener('anilist', ()=>{
+  if (anilistReady) return;          // bir kez
+  anilistReady = true;
+  if (!window.__ANILIST__) return;   // dosya boş geldiyse
+  try{
+    const h = (location.hash || '').split('?')[0];
+    /* OYNATICI/SEÇENEK SAYFASI MI? ayrıştır, tahmin etme.
+       route()'in regex'i ile AYNI: 4 grup. bolumId doluysa oynatıcı veya
+       seçenek listesi sayfasıyız -> yeniden çizme (iframe/url korunur). */
+    const m = h.match(/^#\/anime\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?(?:\/([^/]+))?/);
+    if (m && m[2]) return;           // oynatıcı / liste sayfası -> dokunma
+    /* ⭐ KRİTİK HATA DÜZELTMESİ (28.09.2026, bağımsız denetimle bulundu).
+       İlk sürüm `else renderHome()` diyordu. `#/animeler` ve
+       `#/kategoriler` bu regex ile EŞLEŞMEZ (`#/anime/` bekliyor,
+       `#/animeler`'de `/anime` sonrası `/` değil `l` geliyor) → o iki
+       sayfada kullanıcı AniList yüklenirken ANA SAYFAYA ATILIYORDU.
+       Üstelik yanlış sayfa bozulurken doğru sayfa (zenginleşmesi gereken
+       `#/animeler`) hiç yeniden çizilmiyordu.
+       Doğrusu: `route()` zaten TÜM adresleri doğru renderere dağıtıyor
+       (`:2552` ana/ara · `:2564` animeler · `:2565` kategoriler ·
+        anime). Elle dağıtmak yerine ona devret. */
+    route();
+  }catch(e){ console.warn('[turkanime] anilist yeniden cizilemedi', e); }
+});
 
 /* ============ rastgele anime + mobil alt menü ============ */
 document.querySelectorAll('.rnd').forEach(b=>{

@@ -1,6 +1,89 @@
 # Yama Notu — 28.09.2026
 
+## 🔄 Bu güncelleme: MOBİL (28.09.2026 gece)
+
 **Kısa sürüm (paylaşmak için):**
+
+> **📱 Site artık mobil için düzeltildi.** Ziyaretçilerin **%65,9'u telefondan**
+> geliyordu ama site hiç telefonda denenmemişti. Bu çalışmada 11 düzeltme yapıldı.
+>
+> **En önemlisi — site artık çok daha hızlı açılıyor.** Sitenin kapak görselleri ve
+> özetler için indirdiği 2,7 MB'lık dosya, sayfa görünür olmadan önce yükleniyordu.
+> Artık arka planda geliyor; **sayfa çok daha çabuk açılıyor** ve veri tasarrufu oluyor.
+>
+> **Telefonda 1166 bölüm yavaş yükleniyordu.** One Piece gibi dizilerde bölüm
+> listesinin tamamı tek seferde basılıyordu. Artık **200'er bölümlük sayfalar** hâlinde
+> geliyor; 1166 düğüm yerine 200 düğüm yükleniyor.
+>
+> **"Bölüm bulunamadı" yerine ne olduğu yazıyor.** Eskiden bir uyarı kutusu
+> ekranın ortasına çıkıyordu; küçük bir cihazda 24 saniyelik bir oturumu
+> durduruyordu. Artık uyarı ekrana yazılıyor, kodu çalışmıyorsunuz.
+>
+> **"İndirildi" yalanı sona erdi.** Telefonda indirme sessizce başarısız olabiliyor
+> ama "indirildi ✓" yazılıyordu. Artık gerçeği söylüyor: indirildi, panoya kopyalandı,
+> ya da hiçbiri olmadı — hangisise o.
+>
+> **Geri düğmesi artık çalışıyor.** Telefonda "geri" tuşu 3 sayfa geri gitmek yerine
+> ana sayfaya atıyordu. Artık bölüm listesi sayfaları ve sezon değişimleri geri
+> tuşuyla doğru çalışıyor; adres çubuğundaki adres de doğruyu gösteriyor.
+>
+> **Dokunma hedefleri büyütüldü.** Küçük düğmeler 30–38 pikseldi (parmakla
+> vurmak zor). Telefonda 40–44 piksele çıkarıldı; fareyle kullanan masaüstü
+> kullanıcısı etkilenmiyor.
+>
+> **Kapak görselleri küçültüldü.** 460 piksel yerine gerektiği boyut indiriliyor;
+> liste sayfasında görsel verisi yaklaşık **yarıya** indi.
+>
+> **Adres çubuğu hesaba katıldı** — çentikli telefonlarda oynatıcı ve bölüm listesi
+> artık ekran dışına taşmıyor. Sistem ayarından "animasyonları azalt" seçili olanlar
+> için de sayfa hareketi duruyor.
+>
+> **Artık oynatıcı sorunlarını ölçebiliyoruz.** Daha önce "oynatıcı bozuk mu, yoksa
+> kullanıcı başka yere mi gidiyor" sorusunu **hiçbir veriyle cevaplayamıyorduk**.
+> Artık her oynatıcı açılışı, engellenen kaynak, kaynak değiştirme ve "kaynak
+> linkini aç" tıklaması sayılıyor. **1 hafta sonra bu soru ilk kez veriyle
+> cevaplanabilecek.**
+>
+> **Küçük not:** Sistem "animasyonları azalt" açıksa sonsuz dönen yükleme
+> animasyonu duruyor.
+
+---
+
+**Teknik özet (geliştirici için):**
+
+| | |
+|---|---|
+| `search.html` | 722.663 → **755.580 B** |
+| Değişen dosya | yalnız `search.html` (+669 / −50 satır) |
+| Plandan uygulanan | 13 maddenin **11**'i |
+| Tur içinde bulunan hata | **13** (kendim yazdıklarım) |
+| Bağımsız denetim | 1 KRİTİK + 6 ORTA + 9 DÜŞÜK |
+| Son tarama | 8/8 sayfa **0 JS hatası** |
+
+**Doğrulama (ölçüm, tahmin değil):**
+
+| | |
+|---|---|
+| Oynatıcı iframe isteği | `video.sibnet.ru/shell.php` **tam 1 kez** (ağ günlüğü) |
+| Bölüm listesi DOM | 1 166 → **200** düğüm, 6 sayfa |
+| Kapak görseli | `naturalWidth` 460 → **158 px**; 13 görselde 12 × `medium` |
+| AniList zenginleştirme | puan **8,7** · 1999 · 5 tür · özet |
+| Geri tuşu | sayfa 3 → 1 ✅ · sezon 6 → 1 ✅ · derin bağlantı `?s=2&p=3` ✅ |
+| Telemetri | 4 olay ağ/günlük üzerinden doğrulandı |
+| HTML yapısı | `kaynak_denetle.py` (yeni denetim eklendi) temiz |
+
+**Uygulanmayan 2 madde — gerekçesiyle:**
+
+- **Gerçek cihaz testi (360×800):** yapılamadı, viewport emülasyonu aracı yok.
+  **Ölçülemediğini ölçülmüş gibi yazmadık.**
+- **Service Worker:** bilinçli ertelendi. En yüksek kazanç *ve* en yüksek risk;
+  bayat içerik sunma tehlikesi var, sıfır hata standardını riske atmak doğru değil.
+
+Ayrıntı: `Raporlar/DUZELTME-11-MOBIL-QOL-UYGULAMA.md`
+
+---
+
+## 🧹 Önceki güncelleme: bağlantı temizliği (28.09.2026 sabah)
 
 > **TürkAnime Arşiv güncellendi.**
 >
@@ -45,10 +128,6 @@
 > mesajı çıkıyor.
 >
 > **Çökme düzeltmesi:** Bazı ortamlarda site hiç açılmıyordu. Bu hata giderildi.
-
----
-
-**Teknik özet (geliştirici için):**
 
 | | |
 |---|---|
