@@ -5,11 +5,11 @@
 
 # TurkAnimeTV Arşiv
 
-**turkanime.tv kapanınca arkasında devasa bir arşiv bıraktı. Bu proje, o arşivi kurtarmak ve erişilebilir kılmak amacıyla başlatıldı. Tamamen statik ve sunucusuz (Github-page üzerinden) çalışan izleme sitemizde 6.107 anime ve 317.146 video linki bulunuyor. Ayrıca projede yalnızca videoları değil; animelerin isimlerini, bölümlerin linklerinin, fansub gruplarının ve çevirmenlerin bilgilerini açık bir şekilde veritabanın da sunuyoruz.**
+**turkanime.tv kapanınca arkasında devasa bir arşiv bıraktı. Bu proje, o arşivi kurtarmak ve erişilebilir kılmak amacıyla başlatıldı. Tamamen statik ve sunucusuz (Github-page üzerinden) çalışan izleme sitemizde 6.107 anime ve 317.068 video linki bulunuyor. Ayrıca projede yalnızca videoları değil; animelerin isimlerini, bölümlerin linklerinin, fansub gruplarının ve çevirmenlerin bilgilerini açık bir şekilde veritabanın da sunuyoruz.**
 
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fnutaliaxd.github.io%2FTurkAnimeTV_Arsiv%2F&label=canl%C4%B1%20site)](https://nutaliaxd.github.io/TurkAnimeTV_Arsiv/)
 [![Anime](https://img.shields.io/badge/anime-6.107-green)](https://nutaliaxd.github.io/TurkAnimeTV_Arsiv/)
-[![Video Linki](https://img.shields.io/badge/video%20linki-317.146-blue)](https://nutaliaxd.github.io/TurkAnimeTV_Arsiv/)
+[![Video Linki](https://img.shields.io/badge/video%20linki-317.068-blue)](https://nutaliaxd.github.io/TurkAnimeTV_Arsiv/)
 
 <!-- TODO: Ekran görüntüsü eklenecek -->
   

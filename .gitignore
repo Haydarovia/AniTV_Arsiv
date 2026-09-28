@@ -1,28 +1,130 @@
-__pycache__/
-*.pyc
+# =====================================================================
+# TurkAnime Arsiv — GitHub Pages deposu icin .gitignore
+# Bu depo SITESIN KENDISI: search.html + b/ + kaldirilan.js yayinlanir.
+# =====================================================================
 
-# Yerel veritabanları — ASLA commit edilmez (~145 MB)
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
-*.sqlite
-*.sqlite3
+# ---- YAYINLANAN (bu dosyalar repoda OLMALI) -----------------------------
+#   search.html          SPA (722 KB)
+#   b/                   6.107 bolum verisi dosyasi — SITENIN ICERIGI
+#                        search.html:712  s.src = 'b/'+slug+'.js'
+#                        Canli dogrulama: .../TurkAnimeTV_Arsiv/b/009-1.js -> 200
+#   kaldirilan.js        kaldirilmis olu linkler
+#   anilist.js           AniList zenginlestirme verisi (2,7 MB)
+#   eklenen.js           yonetici eklemeleri
+#   index.html           dizin giris noktasi (meta refresh -> search.html)
+#   logo.png             baslik logosu (342x104, 55 KB)
+#   .nojekyll            Jekyll'i kapatir
+#   README.md, KULLANIM.md, LICENSE
 
-# Kontrol aracı çıktıları (turkanime_tum_kontrol.py)
-kontrol_progress.json
-kontrol.log
-url_durum.csv
+# ---- YERELDE KALACAK, PUSH OLMAYACAK -----------------------------------
 
-# Yerel araç yapılandırması
+# Raporlar/  — denetim raporlari (20 dosya; 28.09.2026'da duzeltildi, once 14 yaziyordu). Kullanici istegiyle disarida.
+# NOT: bu dosyalar git gecmisinde YOK; push sonrasi kaybolurlar ama
+# diskte kalirlar. Yedeklemek istersen ayrica bir arsiv yap.
+Raporlar/
+
+# python dosyaları/ — uretim ve denetim scriptleri. Kullanici istegiyle disarida.
+# NOT: kaynak_denetle.py (sozdizimi denetleyicisi) de burada; push olmadigi icin
+# GitHub Actions ile otomatik calistirilamaz. Istenirse ayri bir kucuk repo.
+python dosyaları/
+
+# Kontrol edilecek/ — 3,7 MB gecici denetim ciktisi (ONE_PIECE_*.md)
+Kontrol edilecek/
+
+# güncel database/ — 145 MB KAYNAK VERITABANI (3 dosya)
+# Sitenin kullanimi YOK; yalnizca turkanime_b_uret.py okuyor.
+# ⛔ DIKKAT: bu klasor b/ dosyalarinin KAYNAK VERISIDIR. Kaybolursa
+#    b/ yeniden uretilemez. Git'e girmemesi dogru ama BIR YEDEK AL.
+güncel database/
+
+# Calisma listeleri — deneme araclari, site icerigi degil
+# DIKKAT: "kaldırılacak.txt" adı ÜÇ adet noktasız ı (U+0131) iceriyor.
+# Düz Türkçe harf yazınca glob sessizce ESLESMIYOR (olcüldü: onceki kural
+# kaldırılcak.txt idi, bir ı eksikti). Bu yuzden glob kullanildi.
+linkler.txt
+kald*r*l*cak.txt
+*.txt.rapor
+# link-tara.py ciktilari (olcu sonuclari, sitenin parcasi degil)
+link-sonuc.json
+link-olu-liste.txt
+link-dogrulanamadi.txt
+# link-tara2.py ciktilari (v2 hukum motoru, 28.09.2026).
+# ⭐ link2-olu-liste*.txt kaldirilan.js'e eklenebilecekleri icerir —
+#   "OLU" haricindeki hicbir hukum (SABLON/AG/ELE/ENGEL) yazilmaz.
+#   SABLON olanlar link2-sablon-liste*.txt'de ayri: dokumantasyon ornegi,
+#   SILINMEZ. bkz. Raporlar/DUZELTME-07-HUKUM-MOTORU.md
+# Cikti adi filtreye gore degisir (es zamanli iki tarama tek dosyayi
+# EZMESI icin): link2-sonuc-uqload.json, link2-olu-liste.txt-uqload ...
+# ⭐ KALIP DÜZELTMESİ (28.09.2026, push öncesi denetimde bulundu):
+#   Önce ayrı ayrı "link2-olu-liste*.txt" yazılıydı. Bu kalıp nokta
+#   ".txt"yi EN SONDA zorunlu kılar; ama link-tara2.py soneki ".txt"den
+#   SONRA koyuyor:
+#       link2-olu-liste.txt-uqload
+#       link2-olu-liste.txt-drivegooglecom
+#   `git check-ignore` ölçümü: 16 dosyanın 9'u IGNORE EDİLMİYORDU ->
+#   PUSH'A GİRECEKTİ. Aralarında "kaldirilan.js'e eklenebilecek ölüler"
+#   dosyası da vardı. Düzeltme: uzantıya değil, ön eke bağlı TEK kalıp.
+link2-*
+# SILINE-CEK-* — veritabanindan silinecek olu satirlari (28.09.2026).
+# Bunlar kaldirilan.js'ten TURETILIR; kaynak kaldirilan.js'in kendisidir.
+# Repoda tutulmaz — dogru yer kaynak dosyasidir. Diskte kalsin ki
+# "yeni database'den sil" adimi yapilabilsin.
+SILINECEK-LINKLER.md
+SILINECEK-LINKLER.txt
+SILINE-CEK-DB-SATIRLAR.csv
+SILINE-CEK-DB-SATIRLAR.sql
+SILINE-CEK-DB-SATIRLAR.md
+# Link-Sonuclari/ — link taramasinin insan-okunur sonuclari (2,1 MB).
+# Her tarama yeniden uretilir; site parcasi degildir. Yerelde kalir.
+# 00-TUM-LINKLER.txt her linkin kararini icerir; 01-OLU-LINKLER.txt
+# kaldirilan.js'e eklenebilecek kesin olu linkleri listeler.
+Link-Sonuclari/
+
+# Gecici / denetim ciktilari
+*.log
+kontrol_progress*.json
+url_durum*.csv
+link_durum.csv
+url_uniq_cache.jsonl.gz
+test_ornek_snippet.txt
+arbiter_rapor.txt
+
+# ---- GEREKLI DOGRULANDI: BUNLAR PUSH EDILMEZ ----------------------------
+# *.YEDEK-*  — search.html.YEDEK (693 KB) ve kaldirilan.js.YEDEK.
+#              Geri alma kopyalari; repoda ise gecmisi kirletir.
+*.YEDEK-*
+*.YEDEK
+# turkanime arsiv logo.png — 1,4 MB KAYNAK dosya. logo.png bundan uretildi
+#   (342x104 / 55 KB). Repoya 1,4 MB bos yer kaplamasin diye disarida;
+#   kaybolursa logo yeniden uretilebilir (kaynak bu dosya).
+turkanime arsiv logo.png
+# yukle.ps1 — ESKI yukleme scripti. Parametresinde "animeler" klasoru
+#   varsayiyor, oysa veri artik b/ icinde; script calisamaz. YENIDEN
+#   YAZILMASI GEREKIYOR. Yaniltici oldugu icin disarida birakildi.
+yukle.ps1
+# .zcodeignore — baska bir aracin ignore dosyasi; projemize ait degil.
+#   ⭐ ONCE BU SATIR YALNIZCA YORUMDU, KURALI YOKTU -> dosya push'a giriyordu.
+#   Yorum ile davranis celisiyordu. Kural eklendi (28.09.2026).
 .zcodeignore
 
-# Python ortamları
+# ---- Editor / OS --------------------------------------------------------
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# ---- Kimlik dosyalari --------------------------------------------------
+.env
+*.key
+*.pem
+*.pfx
+*.p12
+id_rsa*
+*.keystore
+
+# ---- Python ------------------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
 .venv/
 venv/
-env/
-
-# Betikler repoya EKLENMEZ — github sayfası yalnızca site dosyaları
-*.py
-*.ps1
-animeler/
