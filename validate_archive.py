@@ -27,9 +27,6 @@ JSONP_PATTERN = re.compile(
     r'window\.__TKA__\[("(?:[^"\\]|\\.)*")\]=(\[.*\]);?\s*$',
     re.DOTALL,
 )
-ARRAY_ASSIGNMENT = re.compile(
-    r"window\.(KALDIRILAN|EKLENEN)\s*=\s*(\[[\s\S]*?\])\s*;"
-)
 
 
 def read_text(path: Path, errors: list[str], label: str | None = None) -> str | None:
@@ -119,6 +116,9 @@ def parse_jsonp(path: Path, errors: list[str]) -> tuple[str, list[dict[str, Any]
                 errors.append(f"{link_where} field 'tip' must be a non-empty string")
             if link.get("tip") == "url" and not is_nonempty_string(link.get("url")):
                 errors.append(f"{link_where} URL must be a non-empty string")
+            for key in ("player", "fansub"):
+                if key in link and not isinstance(link[key], str):
+                    errors.append(f"{link_where} field '{key}' must be a string when present")
     return anime_slug, episodes
 
 
@@ -222,14 +222,18 @@ def validate_override(path: Path, variable: str, errors: list[str]) -> list[Any]
     if source is None:
         return None
     without_comments = re.sub(r"/\*[\s\S]*?\*/", "", source)
-    match = ARRAY_ASSIGNMENT.search(without_comments)
-    if not match or match.group(1) != variable:
+    assignment = re.match(r"\s*window\.([A-Z]+)\s*=\s*", without_comments)
+    if not assignment or assignment.group(1) != variable:
         errors.append(f"{label}: expected window.{variable} = JSON-array format")
         return None
     try:
-        entries = json.loads(match.group(2))
+        entries, end = json.JSONDecoder().raw_decode(without_comments, assignment.end())
     except json.JSONDecodeError as exc:
         errors.append(f"{label}: invalid JSON array at line {exc.lineno}, column {exc.colno}")
+        return None
+    tail = without_comments[end:].strip()
+    if tail not in {"", ";"}:
+        errors.append(f"{label}: unexpected code after the {variable} data array")
         return None
     if not isinstance(entries, list):
         errors.append(f"{label}: {variable} value must be an array")
@@ -299,13 +303,20 @@ def validate_archive(root: Path | str) -> list[str]:
     search_html = validate_html(search_path, errors, node)
     index_rows: list[Any] | None = None
     if search_html is not None:
-        if search_html.count(INDEX_START) != 1 or search_html.count(INDEX_END) != 1:
-            errors.append("search.html: expected exactly one INDEX_START and INDEX_END marker")
+        assignment_pattern = re.compile(
+            r"window\.INDEX\s*=\s*" + re.escape(INDEX_START)
+            + r"([\s\S]*?)" + re.escape(INDEX_END) + r"\s*;"
+        )
+        assignment = assignment_pattern.search(search_html)
+        if (
+            search_html.count(INDEX_START) != 1
+            or search_html.count(INDEX_END) != 1
+            or assignment is None
+        ):
+            errors.append("search.html: expected one window.INDEX assignment enclosing the marker pair")
         else:
-            start = search_html.index(INDEX_START) + len(INDEX_START)
-            end = search_html.index(INDEX_END, start)
             try:
-                index_rows = json.loads(search_html[start:end])
+                index_rows = json.loads(assignment.group(1))
             except json.JSONDecodeError as exc:
                 errors.append(f"search.html: window.INDEX is invalid JSON at line {exc.lineno}, column {exc.colno}")
             if index_rows is not None and not isinstance(index_rows, list):

@@ -55,6 +55,12 @@ class ValidateArchiveTests(unittest.TestCase):
         errors = validate_archive(self.root)
         self.assertTrue(any("sample" in error and "episode" in error.lower() for error in errors), errors)
 
+    def test_requires_index_markers_inside_window_index_assignment(self) -> None:
+        path = self.root / "search.html"
+        path.write_text(path.read_text(encoding="utf-8").replace("window.INDEX =", "window.NOT_INDEX ="), encoding="utf-8")
+        errors = validate_archive(self.root)
+        self.assertTrue(any("window.INDEX assignment" in error for error in errors), errors)
+
     def test_reports_anime_missing_from_index(self) -> None:
         path = self.root / "search.html"
         path.write_text(path.read_text(encoding="utf-8").replace('["sample", "Sample", 1, 1, 0, ["MAIL"]]', ''), encoding="utf-8")
@@ -65,6 +71,14 @@ class ValidateArchiveTests(unittest.TestCase):
         (self.root / "kaldirilan.js").write_text("window.KALDIRILAN = [1];", encoding="utf-8")
         errors = validate_archive(self.root)
         self.assertTrue(any("kaldirilan.js" in error for error in errors), errors)
+
+    def test_rejects_executable_code_after_override_data(self) -> None:
+        (self.root / "kaldirilan.js").write_text(
+            'window.KALDIRILAN = []; window.KALDIRILAN.push("https://example.test/x");',
+            encoding="utf-8",
+        )
+        errors = validate_archive(self.root)
+        self.assertTrue(any("unexpected code" in error for error in errors), errors)
 
     def test_reports_unclosed_script_element(self) -> None:
         path = self.root / "search.html"
