@@ -61,6 +61,12 @@ class ValidateArchiveTests(unittest.TestCase):
         errors = validate_archive(self.root)
         self.assertTrue(any("window.INDEX assignment" in error for error in errors), errors)
 
+    def test_rejects_a_second_window_index_assignment(self) -> None:
+        path = self.root / "search.html"
+        path.write_text(path.read_text(encoding="utf-8").replace("</body>", "<script>window.INDEX = [];</script></body>"), encoding="utf-8")
+        errors = validate_archive(self.root)
+        self.assertTrue(any("exactly one window.INDEX assignment" in error for error in errors), errors)
+
     def test_reports_anime_missing_from_index(self) -> None:
         path = self.root / "search.html"
         path.write_text(path.read_text(encoding="utf-8").replace('["sample", "Sample", 1, 1, 0, ["MAIL"]]', ''), encoding="utf-8")

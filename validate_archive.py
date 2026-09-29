@@ -308,12 +308,14 @@ def validate_archive(root: Path | str) -> list[str]:
             + r"([\s\S]*?)" + re.escape(INDEX_END) + r"\s*;"
         )
         assignment = assignment_pattern.search(search_html)
+        index_assignments = re.findall(r"\bwindow\.INDEX\s*=", search_html)
         if (
             search_html.count(INDEX_START) != 1
             or search_html.count(INDEX_END) != 1
             or assignment is None
+            or len(index_assignments) != 1
         ):
-            errors.append("search.html: expected one window.INDEX assignment enclosing the marker pair")
+            errors.append("search.html: expected exactly one window.INDEX assignment enclosing the marker pair")
         else:
             try:
                 index_rows = json.loads(assignment.group(1))
